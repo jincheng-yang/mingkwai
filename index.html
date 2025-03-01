@@ -1,7 +1,7 @@
 ---
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-title: Mingkwai-Wubi Simulator
+title: 明快打字机模拟器
 ---
 
 <!DOCTYPE html>
@@ -36,15 +36,15 @@ title: Mingkwai-Wubi Simulator
             <table id="table">
                 <tr>
                 {% assign count = 0 %}
-                {% for row in site.data.blocks %}
+                {% for row in site.data.wubi06 %}
                     <td>
                         <div class="eight">
                             <p class="characters">{{ row.original }}<em>{{ row.new }}</em></p>
-                            <span class="hint">{{ row.hint }}</span>
+                            <span class="hint"><i>{{ row.hint }}</i></span>
                         </div>
                     </td>
                     {% assign count = count | plus: 1 %}
-                    {% if count == 29 %}
+                    {% if count == 28 %}
                         </tr><tr>
                         {% assign count = 0 %}
                     {% endif %}

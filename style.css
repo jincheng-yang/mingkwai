@@ -41,14 +41,16 @@ td {
 
 .characters {
     width: 2em;
+    height: 4em;
+    writing-mode: vertical-rl;
     margin: 0 auto 0 auto;
-    padding: .5em .5em 0em .5em;
+    padding: .5em .2em 0em .5em;
     float: center;
 }
 
 .hint {
-    float: right;
     height: 1em;
+    margin: 0.5em;
 }
 
 em {
@@ -60,7 +62,7 @@ em {
 .blur-overlay {
     position: absolute;
     /* backdrop-filter: blur(5px); Apply blur effect */
-    background: rgba(240, 240, 255, 0.3); /* Semi-transparent layer */
+    background: rgba(192, 192, 192, 0.8); /* Semi-transparent layer */
     z-index: 1;
 }
 
