@@ -1,0 +1,64 @@
+---
+# Feel free to add content and custom Front Matter to this file.
+# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
+title: Mingkwai-Wubi Simulator
+---
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{page.title}}</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=0.8">
+		<!-- link to main stylesheet -->
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<!-- link to fonts -->
+		<link href="https://fonts.googleapis.com/css?family=Barlow+Semi+Condensed:100i,200i,400|Cinzel|Playfair+Display:400,400i|Exo:300,600|Roboto:400|Roboto+Condensed:300|Dancing+Script:400|PT+Serif:400,400i|Palanquin+Dark:400|Noto+Serif:400,400i" rel="stylesheet">
+		<!-- JavaScrips -->
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-108717380-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+			gtag('config', 'UA-108717380-1');
+		</script>
+	</head>
+
+	<body>
+        
+        <div id="container">
+            <div class="blur-overlay" id="blur-top"></div>
+            <div class="blur-overlay" id="blur-bottom"></div>
+            <div class="blur-overlay" id="blur-left"></div>
+            <div class="blur-overlay" id="blur-right"></div>
+            <table id="table">
+                <tr>
+                {% assign count = 0 %}
+                {% for row in site.data.blocks %}
+                    <td>
+                        <div class="eight">
+                            <p class="characters">{{ row.original }}<em>{{ row.new }}</em></p>
+                            <span class="hint">{{ row.hint }}</span>
+                        </div>
+                    </td>
+                    {% assign count = count | plus: 1 %}
+                    {% if count == 29 %}
+                        </tr><tr>
+                        {% assign count = 0 %}
+                    {% endif %}
+                {% endfor %}
+                </tr>
+            </table>
+        </div>
+
+		<footer>
+			<div id="footer-container">
+				<p id="footer-text"></p>
+            </div>
+		</footer>
+
+        <script src="type.js"></script>
+	</body>
+</html>

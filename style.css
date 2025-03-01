@@ -1,0 +1,104 @@
+@font-face {
+    font-family: 'FangSong';
+    src: url('assets/fangsong.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: "FangSong", "SimFang", serif;
+}
+
+#container {
+    display: flex;
+    position: fixed;
+    top: 0;
+    bottom: 4em;
+    left: 0;
+    right: 0;
+}
+
+table {
+    border-spacing: 2em;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+
+td {
+    width: 3em;
+    height: 5em;
+    padding: 0.5em;
+    border: black solid 1px;
+    border-radius: 5px;
+    margin: 1em;
+}
+
+.eight {
+    width: 3em;
+    height: 6em;
+}
+
+.characters {
+    width: 2em;
+    margin: 0 auto 0 auto;
+    padding: .5em .5em 0em .5em;
+    float: center;
+}
+
+.hint {
+    float: right;
+    height: 1em;
+}
+
+em {
+    font-style: normal;
+    color: red;
+}
+
+/* Full screen blur effect */
+.blur-overlay {
+    position: absolute;
+    /* backdrop-filter: blur(5px); Apply blur effect */
+    background: rgba(240, 240, 255, 0.3); /* Semi-transparent layer */
+    z-index: 1;
+}
+
+#blur-top {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+}
+
+#blur-bottom {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+}
+
+#blur-left {
+    top: 0%;
+    left: 0;
+    width: 50%;
+    height: 100%;
+}
+
+#blur-right {
+    top: 0%;
+    right: 0;
+    width: 50%;
+    height: 100%;
+}
+
+footer {
+    position: fixed;
+    height: 4em;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    background-color: #f0f0f0;
+    border-top: 1px solid #e0e0e0;
+}
