@@ -4,6 +4,10 @@ https://jincheng-yang.github.io/mingkwai/
 
 [使用说明](#使用说明)
 
+<video width="516px" height="500px" autoplay loop muted>
+    <source src="assets/recording.mp4" type="video/mp4">
+</video>
+
 ## 简介
 
 此网页模拟器模拟了明快打字机的工作原理，但并非使用上下形检字法，而是使用五笔检字法（的前两笔）。
