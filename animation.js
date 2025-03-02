@@ -131,10 +131,10 @@ function animate() {
     large.rotation.x = (largeTo - largeFrom) * theta + largeFrom;
     for (let i = 0; i < 5; i++) {
         large.children[i].rotation.x = -Math.PI * 2 / 5 * i + (mediumTo - mediumFrom) * theta + mediumFrom;
-        for (let j = 0; j < 5; j++) {
-            large.children[i].children[j].rotation.x = -Math.PI * 2 / 5 * j + Math.PI * 2 / 8 * ind * phi;
-        }
     }
+    i = Math.floor(row / 5);
+    j = row % 5;
+    large.children[i].children[j].rotation.x = -Math.PI * 2 / 5 * j + Math.PI * 2 / 8 * ind * phi;
 
     renderer.render(scene, camera);
 }

@@ -75,17 +75,19 @@ document.addEventListener("keydown", function(event) {
             .duration(1000)
             .style("left", (rect.width / 2 - rect2.width / 2 - spacing[0] - col * (rect2.width / 1 + spacing[0] / 1)) + "px");
     }
-    ind = "12345678".indexOf(key);
+    ind = "12345678 ".indexOf(key);
     if (ind != -1) {
         sound_keydown.play();
         new_char = blocks[row * 28 + col]["chars"][ind];
         if (!new_char) {
             new_char = "　";
         }
-        d3.select("#text")
-            .transition()
-            .duration(100)
-            .style("padding-top", "10px")
+        if (ind != 8) {
+            d3.select("#text")
+                .transition()
+                .duration(100)
+                .style("padding-top", "10px")
+        }
         document.getElementById("text").innerHTML += new_char;
     }
 });
@@ -93,12 +95,14 @@ document.addEventListener("keydown", function(event) {
 
 document.addEventListener("keyup", function(event) {
     flag = false;
-    ind = "12345678".indexOf(key);
+    ind = "12345678 ".indexOf(key);
     if (ind != -1) {
         sound_keyup.play();
-        d3.select("#text")
-            .transition()
-            .duration(100)
-            .style("padding-top", "0px")
+        if (ind != 8) {
+            d3.select("#text")
+                .transition()
+                .duration(100)
+                .style("padding-top", "0px")
+        }
     }
 });
