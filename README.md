@@ -4,9 +4,7 @@ https://jincheng-yang.github.io/mingkwai/
 
 [使用说明](#使用说明)
 
-<video width="516px" height="500px" autoplay loop muted>
-    <source src="assets/recording.mp4" type="video/mp4">
-</video>
+![Video](assets/recording.gif)
 
 ## 简介
 
