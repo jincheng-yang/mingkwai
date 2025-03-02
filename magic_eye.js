@@ -35,22 +35,31 @@ var mediumFrom = Math.PI * 2 * 3 / 5;
 var mediumTo = Math.PI * 2 * 4 / 5;
 var ind = 0;
 var flag = false;
+let sound_keydown = new Audio("assets/audio/keydown.mp3");
+let sound_keyup = new Audio("assets/audio/keyup.mp3");
+let sound_gear = [];
+for (let i = 1; i <= 4; i++) {
+    sound_gear.push(new Audio("assets/audio/gear" + i + ".mp3"));
+}
 
 document.addEventListener("keydown", function(event) {
-    // console.log(event.key);
     if (flag) return;
     key = event.key;
     if (!event.shiftKey) flag = true;
     new_row = "GFDSAHJKLMTREWQYUIOPNBVCX".indexOf(key);
     if (new_row != -1) {
         if (new_row != row) {
+            let diff_middle = Math.abs(new_row - row) % 5;
+            let diff_large = Math.floor(Math.abs(new_row - row) / 5);
+            let max_diff = Math.max(diff_middle, diff_large);
+            sound_gear[max_diff - 1].play();
+
             tableFrom = (rect.height / 2 - rect2.height / 2 - spacing[1] - row * (rect2.height / 1 + spacing[1] / 1));
             tableTo = (rect.height / 2 - rect2.height / 2 - spacing[1] - new_row * (rect2.height / 1 + spacing[1] / 1));
             largeFrom = Math.PI * 2 / 5 * Math.floor(row / 5);
             largeTo = Math.PI * 2 / 5 * Math.floor(new_row / 5);
             mediumFrom = Math.PI * 2 / 5 * (row % 5);
             mediumTo = Math.PI * 2 / 5 * (new_row % 5);
-            console.log(largeFrom, largeTo);
             row = new_row;
             d3.select("#table")
                 .transition()
@@ -68,6 +77,7 @@ document.addEventListener("keydown", function(event) {
     }
     ind = "12345678".indexOf(key);
     if (ind != -1) {
+        sound_keydown.play();
         new_char = blocks[row * 28 + col]["chars"][ind];
         if (!new_char) {
             new_char = "　";
@@ -85,6 +95,7 @@ document.addEventListener("keyup", function(event) {
     flag = false;
     ind = "12345678".indexOf(key);
     if (ind != -1) {
+        sound_keyup.play();
         d3.select("#text")
             .transition()
             .duration(100)

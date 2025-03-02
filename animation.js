@@ -127,7 +127,6 @@ function animate() {
     tableTopNow = d3.select("#table").style("top").replaceAll("px", "");
     theta = (tableTopNow - tableFrom) / (tableTo - tableFrom);
     phi = d3.select("#text").style("padding-top").replaceAll("px", "") / 10;
-    console.log(phi);
 
     large.rotation.x = (largeTo - largeFrom) * theta + largeFrom;
     for (let i = 0; i < 5; i++) {
