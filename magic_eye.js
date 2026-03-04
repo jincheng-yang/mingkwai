@@ -1,6 +1,7 @@
 let rect = d3.select("#magic_eye").node().getBoundingClientRect();
 let rect2 = d3.select("td").node().getBoundingClientRect();
 let spacing = window.getComputedStyle(d3.select("table").node()).borderSpacing.replaceAll("px", "").split(" ");
+if (spacing.length === 1) spacing[1] = spacing[0];
 d3.select("#table")
     .style("left", (rect.width / 2 - rect2.width / 2 - spacing[0]) + "px")
     .style("top", (rect.height / 2 - rect2.height / 2 - spacing[1]) + "px");
