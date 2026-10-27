@@ -22,7 +22,9 @@ body {
 }
 
 #animation {
-    background: rgba(255, 255, 255, 1);
+    background: radial-gradient(ellipse at 50% 40%, #fffdf7 0%, #edeae1 65%, #dcded5 100%);
+    overflow: hidden;
+    border-bottom: 1px solid #b8b6a8;
     display: flex;
     position: fixed;
     top: 0%;
@@ -39,10 +41,13 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
+    isolation: isolate;
+    clip-path: inset(0);
 }
 
 table {
     border-spacing: 2em;
+    width: max-content;
     position: absolute;
     left: 50%;
     top: 50%;
@@ -63,12 +68,19 @@ td {
 }
 
 .characters {
+    display: grid;
+    grid-template-columns: repeat(2, 1em);
+    grid-template-rows: repeat(4, 1em);
     width: 2em;
     height: 4em;
-    writing-mode: vertical-rl;
+    line-height: 1;
     margin: 0 auto 0 auto;
     padding: .5em .2em 0em .5em;
-    float: center;
+}
+
+.candidate {
+    display: block;
+    text-align: center;
 }
 
 .hint {
@@ -81,40 +93,23 @@ em {
     color: red;
 }
 
-/* Full screen blur effect */
-.blur-overlay {
+/* One continuous mask; the transparent center reveals the selected card. */
+#magic-eye-mask {
     position: absolute;
-    /* backdrop-filter: blur(5px); Apply blur effect */
-    background: rgba(192, 192, 192, 0.8); /* Semi-transparent layer */
+    top: 50%;
+    left: 50%;
+    width: 5.5em;
+    height: 8.5em;
+    transform: translate(-50%, -50%);
+    border-radius: 12px;
+    background: transparent;
+    box-shadow:
+        0 0 0 1px #ead4a6,
+        0 0 0 3px #b99a60,
+        0 0 0 4px #876b3c,
+        0 0 0 100vmax rgba(211, 216, 204, 0.88);
+    pointer-events: none;
     z-index: 1;
-}
-
-#blur-top {
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 50%;
-}
-
-#blur-bottom {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 50%;
-}
-
-#blur-left {
-    top: 0%;
-    left: 0;
-    width: 50%;
-    height: 100%;
-}
-
-#blur-right {
-    top: 0%;
-    right: 0;
-    width: 50%;
-    height: 100%;
 }
 
 footer {
@@ -126,4 +121,43 @@ footer {
     text-align: center;
     background-color: #f0f0f0;
     border-top: 1px solid #e0e0e0;
+}
+/* A restrained instrument-panel finish around the moving mechanism. */
+body {
+    margin: 0;
+    color: #293c37;
+    background: #e4e5dc;
+}
+
+#typewriter {
+    background: linear-gradient(#fffdf7, #f3f0e6);
+    border-bottom: 1px solid #d5cfbd;
+    box-shadow: 0 3px 16px #3740390d;
+}
+
+#text {
+    margin: 0;
+    line-height: 3em;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#animation canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#magic_eye {
+    background: #eeeee5;
+}
+
+td {
+    background: #fffdf5;
+    border-color: #aaa993;
+    box-shadow: 0 2px 5px #283b3210;
+}
+
+em {
+    color: #ac5843;
 }
