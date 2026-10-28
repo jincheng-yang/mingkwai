@@ -3,14 +3,11 @@
 	<head>
 		<title>明快打字机模拟器</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=0.8">
+		<meta name="viewport" content="width=device-width, initial-scale=0.8, interactive-widget=resizes-content">
 		<!-- link to main stylesheet -->
 		<link rel="stylesheet" type="text/css" href="style.css">
 		<!-- link to fonts -->
 		<link href="https://fonts.googleapis.com/css?family=Barlow+Semi+Condensed:100i,200i,400|Cinzel|Playfair+Display:400,400i|Exo:300,600|Roboto:400|Roboto+Condensed:300|Dancing+Script:400|PT+Serif:400,400i|Palanquin+Dark:400|Noto+Serif:400,400i" rel="stylesheet">
-		<!-- JavaScrips -->
-		<script src="https://d3js.org/d3.v7.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 		<!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-108717380-1"></script>
 		<script>
@@ -22,9 +19,47 @@
 	</head>
 
 	<body>
+        <dialog id="loading-screen" aria-labelledby="loading-title" aria-describedby="loading-status">
+            <p class="loading-caption">明快 · 五笔检字版</p>
+            <h1 id="loading-title">明快打字机模拟器</h1>
+            <p>用五笔前两码选字，再按数字键印下汉字。</p>
+            <ol class="loading-instructions">
+                <li>第一码用<strong>大写字母</strong>选择滚筒，第二码用<strong>小写字母</strong>选择字模组。</li>
+                <li>在下方魔术眼中选字：右列从上到下为 <strong>1–4</strong>，左列为 <strong>5–8</strong>。空格键留白。</li>
+                <li>试着输入 <kbd>J</kbd> <kbd>e</kbd> <kbd>1</kbd>，打出「明」。</li>
+                <li>若字卡没有需要的字，可按字卡上的提示继续翻页，寻找红色借位字。</li>
+                <li>可拖动、缩放查看机械，双击恢复视角。</li>
+            </ol>
+            <p class="loading-tip">手机请切换到英文键盘。进入后，轻触上方纸面或键盘图标即可输入。</p>
+            <p id="loading-status" role="status" aria-live="polite">正在加载字库与机械…</p>
+            <progress id="loading-progress" class="visually-hidden" value="0" max="100" aria-label="模拟器加载进度"></progress>
+            <button id="start-typing" type="button" aria-describedby="loading-progress" disabled>
+                <span id="loading-fill" aria-hidden="true"></span>
+                <span id="start-typing-label">加载中… 0%</span>
+            </button>
+        </dialog>
         
         <div id="typewriter">
-            <p id="text"></p>
+            <button id="keyboard-toggle" type="button" aria-label="显示键盘" aria-controls="text" aria-pressed="false">
+                <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect class="keyboard-icon-case" x="2" y="5" width="20" height="14" rx="2" />
+                    <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10" />
+                </svg>
+            </button>
+            <span id="printing-point" aria-hidden="true">
+                <svg width="28" height="16" viewBox="0 0 28 16">
+                    <defs>
+                        <linearGradient id="marker-metal" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#d8c59b" />
+                            <stop offset="0.5" stop-color="#967a49" />
+                            <stop offset="1" stop-color="#65583e" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M2 14V11H8L14 2L20 11H26V14Z" fill="url(#marker-metal)" stroke="#65583e" stroke-linejoin="round" />
+                    <path d="M14 5V11" stroke="#f4e8cc" stroke-width="1" />
+                </svg>
+            </span>
+            <p id="text" lang="en" contenteditable="true" role="textbox" aria-label="打字机输入" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false"></p>
         </div>
         <div id="animation">
         </div>
@@ -33,7 +68,6 @@
             <table id="table" aria-label="魔术眼候选字"></table>
         </div>
 
-        <script src="magic_eye.js"></script>
-        <script src="animation.js"></script>
+        <script src="loading.js"></script>
 	</body>
 </html>

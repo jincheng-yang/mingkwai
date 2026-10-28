@@ -4,7 +4,7 @@ https://jincheng-yang.github.io/mingkwai/
 
 [使用说明](#使用说明)
 
-![Video](assets/recording.gif)
+![Video](assets/recording-4.gif)
 
 ## 简介
 

@@ -18,6 +18,8 @@ var ind = -1;
 
 const sound_keydown = new Audio('assets/audio/keydown.mp3');
 const sound_keyup = new Audio('assets/audio/keyup.mp3');
+const sound_swoosh = new Audio('assets/audio/swoosh.mp3');
+sound_swoosh.volume = 0.1;
 const sound_gear = Array.from({ length: 4 }, (_, index) => new Audio(`assets/audio/gear${index + 1}.mp3`));
 const reducedEyeMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let activeStrikeKey = null;
@@ -73,7 +75,8 @@ layoutMagicEye();
 new ResizeObserver(layoutMagicEye).observe(magicEye);
 document.fonts.ready.then(layoutMagicEye);
 
-d3.csv('dev/wubi06.csv').then(data => {
+window.simulatorLoading.loadText('dev/wubi06.csv', 'candidateDownload', 28354).then(source => {
+    const data = d3.csvParse(source);
     blocks = data;
     // Build the same markup in Jekyll and plain static previews.
     const body = document.createElement('tbody');
@@ -107,17 +110,30 @@ d3.csv('dev/wubi06.csv').then(data => {
     });
     candidateTable.replaceChildren(body);
     layoutMagicEye();
-}).catch(error => console.error('Unable to load magic-eye characters:', error));
+    window.simulatorLoading?.ready('candidates');
+}).catch(error => {
+    console.error('Unable to load magic-eye characters:', error);
+    window.simulatorLoading?.fail(error);
+});
 
-document.addEventListener('keydown', event => {
-    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
-    if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
-    const key = event.key;
+const typingSurface = document.getElementById('text');
+const printingPoint = document.getElementById('printing-point');
+const keyboardToggle = document.getElementById('keyboard-toggle');
+let typedText = typingSurface.textContent;
+let activeStrikeIsMobile = false;
+const mobileKeys = [];
+let mobileTyping = false;
+const strikeDuration = 300;
+let strikeStartedAt = 0;
+let strikeReleaseTimer = null;
+let composing = false;
+const touchKeyboard = window.matchMedia('(any-pointer: coarse)');
+
+function typeKey(key, mobile = false) {
     const newRow = 'GFDSAHJKLMTREWQYUIOPNBVCX'.indexOf(key);
     const newCol = 'qazwsxedcrfvtgbyhnujmikolp[]'.indexOf(key);
     const choice = '12345678 '.indexOf(key);
     if (key.length !== 1 || (newRow === -1 && newCol === -1 && choice === -1)) return;
-    event.preventDefault();
 
     if (newRow !== -1 && newRow !== row) {
         const middleDiff = Math.abs(newRow - row) % 5;
@@ -139,6 +155,13 @@ document.addEventListener('keydown', event => {
         }
     }
     if (newCol !== -1) {
+        if (key >= 'a' && key <= 'z') {
+            const distance = Math.abs(newCol - col);
+            sound_swoosh.playbackRate = 1 / Math.min(2, 1 + distance / 10);
+            sound_swoosh.preservesPitch = true;
+            sound_swoosh.currentTime = 0;
+            playSound(sound_swoosh);
+        }
         col = newCol;
         const position = selectedPosition();
         if (position) {
@@ -150,26 +173,157 @@ document.addEventListener('keydown', event => {
     if (choice !== -1) {
         const block = blocks[row * 28 + col];
         if (!block && choice !== 8) return;
+        releaseStrike();
         ind = choice;
         activeStrikeKey = key;
+        activeStrikeIsMobile = mobile;
+        strikeStartedAt = performance.now();
         playSound(sound_keydown);
         const character = choice === 8 ? '　' : Array.from(block.chars)[choice] || '　';
-        document.getElementById('text').textContent += character;
-        if (choice !== 8) {
-            d3.select('#text').interrupt().transition()
-                .duration(reducedEyeMotion.matches ? 0 : 100).style('padding-top', '10px');
+        typedText += character;
+        typingSurface.textContent = typedText;
+        const range = document.createRange();
+        range.setStart(typingSurface.firstChild, typedText.length - character.length);
+        range.setEnd(typingSurface.firstChild, typedText.length);
+        const advance = range.getBoundingClientRect().width || parseFloat(getComputedStyle(typingSurface).fontSize);
+        // Compensate immediately for the appended glyph, keeping the previous
+        // text in place until release advances the paper by one glyph.
+        d3.select(typingSurface).interrupt()
+            .style('--paper-offset', `${advance}px`)
+            .transition().duration(reducedEyeMotion.matches ? 0 : strikeDuration)
+            .style('--strike-progress', choice === 8 ? '0' : '1');
+        d3.select(printingPoint).interrupt().transition()
+            .duration(reducedEyeMotion.matches ? 0 : strikeDuration)
+            .style('--marker-offset', `${advance}px`);
+    }
+}
+
+document.addEventListener('keydown', event => {
+    if (window.simulatorLoading?.active) return;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
+    const editable = event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]');
+    if (editable && editable !== typingSurface) return;
+    // Some software keyboards report physical-looking codes and immediately
+    // send keyup. On touch devices, use committed input and a timed strike.
+    if (editable && (touchKeyboard.matches || !event.code || event.keyCode === 229)) return;
+    if (event.key.length !== 1 || !'GFDSAHJKLMTREWQYUIOPNBVCXqazwsxedcrfvtgbyhnujmikolp[]12345678 '.includes(event.key)) return;
+    event.preventDefault();
+    if (event.repeat) return;
+    typeKey(event.key);
+});
+
+function typeMobileText(text) {
+    typingSurface.textContent = typedText;
+    mobileKeys.push(...text || '');
+    if (!mobileTyping) runMobileKeys();
+}
+
+function runMobileKeys() {
+    mobileTyping = true;
+    while (mobileKeys.length) {
+        typeKey(mobileKeys.shift(), true);
+        if (activeStrikeKey !== null && activeStrikeIsMobile) {
+            const strikeKey = activeStrikeKey;
+            setTimeout(() => {
+                if (activeStrikeIsMobile && activeStrikeKey === strikeKey) releaseStrike();
+                setTimeout(runMobileKeys, strikeDuration);
+            }, strikeDuration);
+            return;
         }
     }
+    mobileTyping = false;
+}
+
+typingSurface.addEventListener('beforeinput', event => {
+    if (composing || event.isComposing || !event.cancelable) return;
+    const insertion = event.inputType.startsWith('insert') && !['insertParagraph', 'insertLineBreak'].includes(event.inputType);
+    // Let the browser supply the edit when beforeinput has no text payload.
+    // The input fallback will extract it from the edited surface.
+    if (insertion && event.data == null) return;
+    event.preventDefault();
+    if (insertion) typeMobileText(event.data);
+});
+
+function insertedSurfaceText() {
+    const edited = typingSurface.textContent;
+    let start = 0;
+    while (start < typedText.length && start < edited.length && typedText[start] === edited[start]) start++;
+    let oldEnd = typedText.length;
+    let newEnd = edited.length;
+    while (oldEnd > start && newEnd > start && typedText[oldEnd - 1] === edited[newEnd - 1]) {
+        oldEnd--;
+        newEnd--;
+    }
+    return edited.slice(start, newEnd);
+}
+
+typingSurface.addEventListener('input', event => {
+    if (composing || event.isComposing || typingSurface.textContent === typedText) return;
+    // Restore the output when a keyboard delivers a noncancelable edit.
+    const insertion = event.inputType?.startsWith('insert');
+    typeMobileText(insertion ? event.data ?? insertedSurfaceText() : '');
+});
+typingSurface.addEventListener('compositionstart', () => { composing = true; });
+typingSurface.addEventListener('compositionend', event => {
+    composing = false;
+    typeMobileText(event.data ?? insertedSurfaceText());
+});
+
+function updateKeyboardToggle() {
+    const focused = document.activeElement === typingSurface;
+    keyboardToggle.setAttribute('aria-pressed', String(focused));
+    keyboardToggle.setAttribute('aria-label', focused ? '隐藏键盘' : '显示键盘');
+}
+
+// Preserve the surface's focus until click so a second tap can dismiss it.
+keyboardToggle.addEventListener('pointerdown', event => event.preventDefault());
+keyboardToggle.addEventListener('click', () => {
+    if (document.activeElement === typingSurface) typingSurface.blur();
+    else typingSurface.focus({ preventScroll: true });
+});
+typingSurface.addEventListener('focus', updateKeyboardToggle);
+typingSurface.addEventListener('blur', () => {
+    releaseStrike();
+    updateKeyboardToggle();
 });
 
 function releaseStrike() {
+    if (strikeReleaseTimer !== null) {
+        clearTimeout(strikeReleaseTimer);
+        strikeReleaseTimer = null;
+    }
     if (activeStrikeKey === null) return;
     activeStrikeKey = null;
+    activeStrikeIsMobile = false;
     playSound(sound_keyup);
-    d3.select('#text').interrupt().transition()
-        .duration(reducedEyeMotion.matches ? 0 : 100).style('padding-top', '0px');
+    d3.select(typingSurface).interrupt().transition()
+        .duration(reducedEyeMotion.matches ? 0 : strikeDuration)
+        .style('--strike-progress', '0').style('--paper-offset', '0px');
+    d3.select(printingPoint).interrupt().transition()
+        .duration(reducedEyeMotion.matches ? 0 : strikeDuration)
+        .style('--marker-offset', '0px');
 }
 document.addEventListener('keyup', event => {
-    if (event.key === activeStrikeKey) releaseStrike();
+    if (activeStrikeIsMobile || event.key !== activeStrikeKey) return;
+    const remaining = strikeDuration - (performance.now() - strikeStartedAt);
+    if (remaining <= 0) releaseStrike();
+    else if (strikeReleaseTimer === null) {
+        strikeReleaseTimer = setTimeout(releaseStrike, remaining);
+    }
 });
 window.addEventListener('blur', releaseStrike);
+
+function resizeVisibleViewport() {
+    const viewport = window.visualViewport;
+    document.documentElement.style.setProperty('--viewport-height', `${viewport ? viewport.height : window.innerHeight}px`);
+    document.documentElement.style.setProperty('--viewport-top', `${viewport ? viewport.offsetTop : 0}px`);
+}
+
+// Mobile keyboards often resize only the visual viewport, not the layout
+// viewport. Keep both the mechanism and magic eye inside the visible area.
+window.visualViewport?.addEventListener('resize', resizeVisibleViewport);
+window.visualViewport?.addEventListener('scroll', resizeVisibleViewport);
+window.addEventListener('resize', resizeVisibleViewport);
+resizeVisibleViewport();
+
+// The instruction screen focuses the typing surface when the user starts.

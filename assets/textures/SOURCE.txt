@@ -1,0 +1,9 @@
+Wood Table 001 — Poly Haven
+Source: https://polyhaven.com/a/wood_table_001
+License: CC0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Photography: Dimitrios Savva. Processing: Rico Cilliers.
+
+The original 1K JPEG maps are included without modification:
+wood-color.jpg: wood_table_001_diff_1k.jpg
+wood-normal.jpg: wood_table_001_nor_gl_1k.jpg
+wood-roughness.jpg: wood_table_001_rough_1k.jpg

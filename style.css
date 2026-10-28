@@ -3,22 +3,31 @@
     src: url('assets/fangsong.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --viewport-height: 100vh;
+    --viewport-height: 100dvh;
+    --viewport-top: 0px;
 }
 
 body {
     font-family: "FangSong", "SimFang", serif;
+    overflow: hidden;
 }
 
 #typewriter {
     background: rgb(240, 240, 238);
     width: 100%;
     height: 3em;
-    position: absolute;
+    position: fixed;
     left: 0;
-    top: 0;
+    top: var(--viewport-top);
     z-index: 2;
     text-align: center;
     font-size: 1.5em;
+    transition: top 0.3s ease;
 }
 
 #animation {
@@ -27,22 +36,26 @@ body {
     border-bottom: 1px solid #b8b6a8;
     display: flex;
     position: fixed;
-    top: 0%;
-    bottom: 40%;
+    top: calc(var(--viewport-top) + 4.5rem + 1px);
+    height: max(0px, calc(var(--viewport-height) * 0.6 - 4.5rem - 1px));
     left: 0;
     right: 0;
     z-index: 1;
+    transition: top 0.3s ease, height 0.3s ease;
 }
 
 #magic_eye {
     display: flex;
     position: fixed;
-    top: 60%;
-    bottom: 0;
+    top: calc(var(--viewport-top) + var(--viewport-height) * 0.6);
+    height: calc(var(--viewport-height) * 0.4);
+    /* Keep the full candidate card visible when the keyboard reduces space. */
+    font-size: clamp(8px, calc(var(--viewport-height) * 0.04), 16px);
     left: 0;
     right: 0;
     isolation: isolate;
     clip-path: inset(0);
+    transition: top 0.3s ease, height 0.3s ease, font-size 0.3s ease;
 }
 
 table {
@@ -136,10 +149,80 @@ body {
 }
 
 #text {
+    box-sizing: border-box;
+    height: 100%;
     margin: 0;
+    /* The right edge follows the printing point during each carriage step. */
+    --paper-offset: 0px;
+    --paper-left-inset: 12px;
+    padding-inline: var(--paper-left-inset) calc(25% - var(--paper-offset));
+    /* Keep the end of even an overflowing line at the printing point. */
+    display: flex;
+    justify-content: flex-end;
     line-height: 3em;
-    white-space: nowrap;
+    /* Preserve blank characters, including trailing spaces, without wrapping. */
+    white-space: pre;
     overflow: hidden;
+    overflow: clip;
+    clip-path: inset(0 0 0 var(--paper-left-inset));
+    cursor: text;
+    caret-color: transparent;
+}
+
+#printing-point {
+    position: absolute;
+    --marker-offset: 0px;
+    left: 75%;
+    bottom: 3px;
+    transform: translateX(calc(-50% + var(--marker-offset)));
+    display: flex;
+    filter: drop-shadow(0 1px 1px #37403930);
+    pointer-events: none;
+}
+
+#keyboard-toggle {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #293c37;
+    font: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+#keyboard-toggle .keyboard-icon-case {
+    fill: #fffdf7;
+}
+
+#keyboard-toggle[aria-pressed="true"] .keyboard-icon-case {
+    fill: #293c37;
+}
+
+#keyboard-toggle[aria-pressed="true"] svg path {
+    stroke: #fffdf7;
+}
+
+@media (any-pointer: coarse) {
+    #keyboard-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #text {
+        --paper-left-inset: 60px;
+    }
 }
 
 #animation canvas {
@@ -160,4 +243,114 @@ td {
 
 em {
     color: #ac5843;
+}
+
+#loading-screen {
+    box-sizing: border-box;
+    width: min(560px, calc(100% - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: clamp(20px, 5vw, 36px);
+    overflow-y: auto;
+    border: 1px solid #b99a60;
+    border-radius: 12px;
+    color: #293c37;
+    background: linear-gradient(145deg, #fffdf7, #eee8da);
+    box-shadow: 0 16px 64px #182b3540;
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+#loading-screen::backdrop {
+    background: #25342fe0;
+}
+
+#loading-screen h1 {
+    margin: 0 0 16px;
+    font-size: clamp(24px, 5vw, 32px);
+}
+
+.loading-caption {
+    margin: 0 0 8px;
+    color: #79633c;
+    letter-spacing: 0.15em;
+}
+
+.loading-instructions {
+    padding-left: 1.5em;
+}
+
+.loading-instructions li + li {
+    margin-top: 12px;
+}
+
+.loading-instructions kbd {
+    padding: 2px 6px;
+    border: 1px solid #b9b19d;
+    border-radius: 4px;
+    background: #fffdf7;
+    font: inherit;
+}
+
+.loading-tip, #loading-status {
+    font-size: 14px;
+    color: #52675e;
+}
+
+#start-typing {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #293c37;
+    border-radius: 6px;
+    color: #fffdf7;
+    background: #293c37;
+    font: inherit;
+    cursor: pointer;
+}
+
+#start-typing:disabled {
+    color: #293c37;
+    background: #e4e5dc;
+    cursor: wait;
+}
+
+#loading-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    width: var(--loading-progress, 0%);
+    background: linear-gradient(90deg, #b6c7a9, #829b75);
+    transition: width 0.12s linear;
+}
+
+#start-typing-label {
+    position: relative;
+    z-index: 1;
+}
+
+#start-typing:not(:disabled) #loading-fill {
+    background: #293c37;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #typewriter,
+    #animation,
+    #magic_eye,
+    #loading-fill {
+        transition: none;
+    }
 }
