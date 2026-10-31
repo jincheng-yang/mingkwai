@@ -1,0 +1,32 @@
+Wubi 98 source and generation
+
+Upstream: 98五笔小组 (yanhuacuo/98wubi-tables)
+Original file: 98五笔单字表-【单义】.txt
+Revision: 6b8b6fb9d3c34e0d5e3b17211e1f1c100e7eb697
+Downloaded: 2026-10-31
+Source URL:
+https://github.com/yanhuacuo/98wubi-tables/blob/6b8b6fb9d3c34e0d5e3b17211e1f1c100e7eb697/98%E4%BA%94%E7%AC%94%E5%8D%95%E5%AD%97%E8%A1%A8-%E3%80%90%E5%8D%95%E4%B9%89%E3%80%91.txt
+Original SHA-256:
+bde310b925c6e273be5d15cbf1224a0db20c94a5e0f53b628ffefd22406706a6
+
+License: upstream Unlicense (public domain dedication); see LICENSE.
+This license also covers the derived source TSV and code CSV.
+
+wubi-98-source.tsv contains all 11,613 single-character entries whose
+characters occur in ../gb2312.txt. The original UTF-16 table is converted to
+UTF-8, with a char/code header; upstream entry order is preserved. All 6,763
+requested characters are covered. No codes are added or inferred.
+This subset was extracted on 2026-10-31.
+
+Run: python3 dev/wubi-98/generate_wubi-98.py
+The generator can run from any working directory and requires only Python's
+standard library. It prefers the shortest listed code per character, keeping
+upstream order for ties. It writes characters in ../gb2312.txt order to
+wubi-98-code.csv with columns char,key1,key2. key1 is uppercase; key2 is
+the second letter, or the repeated first letter for a one-letter short code.
+For example, 一=g produces G,g; 明=je produces J,e; 机=sw produces S,w.
+
+This upstream table includes root alternatives under one-letter keys
+(for example both 工 and 戈 under a), as well as the usual short-code
+characters. These valid alternatives are retained when choosing the shortest
+code, rather than replacing them with invented full-code prefixes.

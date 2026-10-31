@@ -465,7 +465,8 @@
         }
     }
     Promise.all([
-        window.simulatorLoading.loadText('dev/wubi06.txt', 'rollerText', 24479),
+        window.simulatorLoading.loadText(window.simulatorLoading.scheme.rollerTextUrl, 'rollerText',
+            window.simulatorLoading.scheme.rollerTextBytes),
         window.simulatorLoading.loadText('assets/FangSong_GB2312_Regular.json', 'rollerFont', 9580942)
             .then(source => new THREE.FontLoader().parse(JSON.parse(source))),
         woodMapsReady

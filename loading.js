@@ -6,6 +6,68 @@
     const label = document.getElementById('start-typing-label');
     const progress = document.getElementById('loading-progress');
     const typingSurface = document.getElementById('text');
+    const schemeControl = document.getElementById('input-scheme');
+    const schemes = Object.freeze({
+        'wubi-06': Object.freeze({
+            id: 'wubi-06', name: '新世纪五笔',
+            candidatesUrl: 'dev/wubi-06/wubi-06.csv', candidatesBytes: 49214,
+            rollerTextUrl: 'dev/wubi-06/wubi-06.txt', rollerTextBytes: 24479,
+            description: '用五笔前两码选字，再按数字键印下汉字。',
+            exampleRow: 'J', exampleColumn: 'e', initialRow: 'P', initialColumn: 'b'
+        }),
+        'wubi-86': Object.freeze({
+            id: 'wubi-86', name: '86版五笔',
+            candidatesUrl: 'dev/wubi-86/wubi-86.csv', candidatesBytes: 49206,
+            rollerTextUrl: 'dev/wubi-86/wubi-86.txt', rollerTextBytes: 24479,
+            description: '用86版五笔前两码选字，再按数字键印下汉字。',
+            exampleRow: 'J', exampleColumn: 'e', initialRow: 'P', initialColumn: 'b'
+        }),
+        'wubi-98': Object.freeze({
+            id: 'wubi-98', name: '98版五笔',
+            candidatesUrl: 'dev/wubi-98/wubi-98.csv', candidatesBytes: 49201,
+            rollerTextUrl: 'dev/wubi-98/wubi-98.txt', rollerTextBytes: 24479,
+            description: '用98版五笔前两码选字，再按数字键印下汉字。',
+            exampleRow: 'J', exampleColumn: 'e', initialRow: 'P', initialColumn: 'b'
+        }),
+        'shuangpin-xiaohe': Object.freeze({
+            id: 'shuangpin-xiaohe', name: '小鹤双拼',
+            candidatesUrl: 'dev/shuangpin-xiaohe/shuangpin-xiaohe.csv', candidatesBytes: 49304,
+            rollerTextUrl: 'dev/shuangpin-xiaohe/shuangpin-xiaohe.txt', rollerTextBytes: 24479,
+            description: '用小鹤双拼的声母码和韵母码选字，再按数字键印下汉字。',
+            exampleRow: 'M', exampleColumn: 'k', initialRow: 'M', initialColumn: 'k'
+        }),
+        'shuangpin-microsoft': Object.freeze({
+            id: 'shuangpin-microsoft', name: '微软双拼',
+            candidatesUrl: 'dev/shuangpin-microsoft/shuangpin-microsoft.csv', candidatesBytes: 49304,
+            rollerTextUrl: 'dev/shuangpin-microsoft/shuangpin-microsoft.txt', rollerTextBytes: 24479,
+            description: '用微软双拼选字，再按数字键印下汉字。韵母 ing 使用分号 ; 键。',
+            exampleRow: 'M', exampleColumn: ';', initialRow: 'M', initialColumn: ';',
+            columnKeys: 'qazwsxedcrfvtgbyhnujmik;ol0p'
+        }),
+        'shuangpin-abc': Object.freeze({
+            id: 'shuangpin-abc', name: '智能ABC双拼',
+            candidatesUrl: 'dev/shuangpin-abc/shuangpin-abc.csv', candidatesBytes: 49304,
+            rollerTextUrl: 'dev/shuangpin-abc/shuangpin-abc.txt', rollerTextBytes: 24479,
+            description: '用智能ABC双拼选字，再按数字键印下汉字。',
+            exampleRow: 'M', exampleColumn: 'y', initialRow: 'M', initialColumn: 'y'
+        })
+    });
+    const requestedScheme = new URL(window.location.href).searchParams.get('scheme');
+    const scheme = Object.hasOwn(schemes, requestedScheme) ? schemes[requestedScheme] : schemes['wubi-06'];
+    schemeControl.value = scheme.id;
+    document.getElementById('loading-caption').textContent = `明快 · ${scheme.name}`;
+    document.getElementById('loading-description').textContent = scheme.description;
+    document.getElementById('loading-example-row').textContent = scheme.exampleRow;
+    document.getElementById('loading-example-column').textContent = scheme.exampleColumn;
+    document.title = `明快打字机模拟器 · ${scheme.name}`;
+    schemeControl.addEventListener('change', () => {
+        if (!Object.hasOwn(schemes, schemeControl.value) || schemeControl.value === scheme.id) return;
+        // Reload the selected scheme as one unit, avoiding mixed data or stale
+        // asynchronous geometry/cache work from a previously selected scheme.
+        const url = new URL(window.location.href);
+        url.searchParams.set('scheme', schemeControl.value);
+        window.location.replace(url.href);
+    });
     const weights = { d3: 2, three: 2, candidateDownload: 2, candidates: 4, rollerText: 2, rollerFont: 44, wood: 4, font: 10, mechanism: 30 };
     const pending = new Set(Object.keys(weights));
     const fractions = Object.fromEntries(Object.keys(weights).map(part => [part, 0]));
@@ -28,6 +90,7 @@
     }
 
     window.simulatorLoading = {
+        scheme,
         get active() { return !dismissed; },
         report(part, fraction) {
             if (failed || !pending.has(part)) return;

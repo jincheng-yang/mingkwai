@@ -399,6 +399,29 @@ em {
     letter-spacing: 0.15em;
 }
 
+.loading-scheme-control {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin: 12px 0;
+}
+
+#input-scheme {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 6px 10px;
+    border: 1px solid #b99a60;
+    border-radius: 6px;
+    background: #fffdf7;
+    color: #293c37;
+    font: inherit;
+}
+
+#input-scheme:focus-visible { outline: 2px solid #987b47; outline-offset: 2px; }
+
 .loading-instructions {
     padding-left: 1.5em;
 }

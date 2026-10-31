@@ -1,0 +1,33 @@
+Wubi 86 source and generation
+
+Upstream: Rime Wubi (rime/rime-wubi), wubi86.dict.yaml
+Revision: 152a0d3f3efe40cae216d1e3b338242446848d07
+Downloaded: 2026-10-31
+Source URL:
+https://raw.githubusercontent.com/rime/rime-wubi/152a0d3f3efe40cae216d1e3b338242446848d07/wubi86.dict.yaml
+Original SHA-256:
+f833d86b72341fe82e069a425b6625f29ef85f1bc0f34f6fb7975fe514888b5a
+
+License: upstream GNU LGPL version 3; see LICENSE, COPYING.GPL3, and AUTHORS.
+The source TSV and code CSV are derived table data under that license.
+The upstream AUTHORS attributes the table conversion to Yu Yuwei (acevery),
+derived from ibus-table, and the original Wubi work to Wang Yongmin.
+The dictionary additionally credits original table author Wozy, table
+conversion by Chen Xing and Gong Chen, and updates by Yu Yuwei.
+
+wubi-86-source.tsv contains all 11,012 uncommented single-character entries
+whose characters occur in ../gb2312.txt. Only the text and code columns are
+retained, in their original upstream order; the YAML header, phrases, weights,
+and stem column are omitted. All 6,763 requested characters are covered.
+No codes are added or inferred. This subset was extracted on 2026-10-31.
+
+Run: python3 dev/wubi-86/generate_wubi-86.py
+The generator can run from any working directory and requires only Python's
+standard library. It prefers the shortest listed code per character, keeping
+upstream order for ties. It writes characters in ../gb2312.txt order to
+wubi-86-code.csv with columns char,key1,key2. key1 is uppercase; key2 is
+the second letter, or the repeated first letter for a one-letter short code.
+For example, 一=g produces G,g; 明=je produces J,e; 机=sm produces S,m.
+
+This is the Wubi 86 table with its original level 1 and 2 short codes,
+as documented by the upstream dictionary's changelog.

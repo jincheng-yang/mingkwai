@@ -5,7 +5,7 @@ const machineLayout = Object.freeze({
     facesPerRoller: 8,
     columnCount: 28,
     rowKeys: 'GFDSA!HJKLM@TREWQ#YUIOP$NBVCX%^&*()Z',
-    columnKeys: 'qazwsxedcrfvtgbyhnujmik9ol0p'
+    columnKeys: window.simulatorLoading.scheme.columnKeys || 'qazwsxedcrfvtgbyhnujmik9ol0p'
 });
 
 const magicEye = document.getElementById('magic_eye');
@@ -16,8 +16,8 @@ let spacing = [32, 32];
 let blocks = [];
 
 // These values also drive the mechanical animation.
-var row = machineLayout.rowKeys.indexOf('P');
-var col = machineLayout.columnKeys.indexOf('b');
+var row = machineLayout.rowKeys.indexOf(window.simulatorLoading.scheme.initialRow);
+var col = machineLayout.columnKeys.indexOf(window.simulatorLoading.scheme.initialColumn);
 var largeFrom = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount;
 var largeTo = largeFrom;
 var mediumFrom = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
@@ -286,7 +286,8 @@ function updateCardStack(animatedRow) {
     });
 }
 
-window.simulatorLoading.loadText('dev/wubi06.csv', 'candidateDownload', 43933).then(async source => {
+window.simulatorLoading.loadText(window.simulatorLoading.scheme.candidatesUrl, 'candidateDownload',
+    window.simulatorLoading.scheme.candidatesBytes).then(async source => {
     const data = d3.csvParse(source);
     blocks = data;
     if (!candidateTable) {

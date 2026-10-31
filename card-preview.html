@@ -6480,7 +6480,7 @@
         return rows.map(values => Object.fromEntries(headers.map((name, i) => [name, values[i] || ''])));
     }
     if (location.protocol === 'http:' || location.protocol === 'https:') {
-        fetch('dev/wubi06.csv').then(response => {
+        fetch('dev/wubi-06/wubi-06.csv').then(response => {
             if (!response.ok) throw new Error(`Unable to load cards: ${response.status}`);
             return response.text();
         }).then(source => {
