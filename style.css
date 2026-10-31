@@ -203,7 +203,6 @@ body {
     bottom: 3px;
     transform: translateX(calc(-50% + var(--marker-offset)));
     display: flex;
-    filter: drop-shadow(0 1px 1px #37403930);
     pointer-events: none;
 }
 

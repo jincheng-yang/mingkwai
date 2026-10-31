@@ -122,6 +122,7 @@
             await loadScript('https://d3js.org/d3.v7.min.js', 'd3');
             await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'three');
             await loadScript('cards.js');
+            await loadScript('card-raster.js');
             await loadScript('magic_eye.js');
             await loadScript('animation.js');
         } catch (error) {

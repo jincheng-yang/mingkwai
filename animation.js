@@ -5,8 +5,9 @@
     const { groupCount, rollersPerGroup, facesPerRoller, columnCount } = machineLayout;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+    const compactDisplay = window.matchMedia('(any-pointer: coarse)').matches;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compactDisplay ? 1.5 : 2));
     renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
@@ -290,6 +291,8 @@
     carriage.position.set(0, -(mediumOrbitRadius + rollerOrbitRadius + rollerRadius + 0.3), 0);
     mechanism.add(carriage);
 
+    // Temporarily disable the glass and its extra render pass for comparison.
+    const eyepieceGlassEnabled = true;
     // Render a tightly cropped, supersampled view of the actual raised type.
     // The normal canvas antialiasing does not apply to offscreen render targets.
     const LensRenderTarget = renderer.capabilities.isWebGL2
@@ -354,6 +357,7 @@
     const lens = new THREE.Mesh(new THREE.CircleGeometry(lensRadius - 0.025, 64), lensMaterial);
     lens.rotation.x = Math.PI / 2;
     lens.position.y = -0.29;
+    lens.visible = eyepieceGlassEnabled;
     carriage.add(lens);
     const projectedLensCenter = new THREE.Vector3();
     const projectedLensCorner = new THREE.Vector3();
@@ -377,7 +381,7 @@
         const minimumZoom = uniforms.magnification.value - uniforms.edgeFalloff.value;
         const cropSize = Math.ceil(halfExtent * 2 / minimumZoom + 4);
         // Bucket sizes avoid reallocating GPU buffers on every drag/zoom frame.
-        const targetSize = Math.min(2048, renderer.capabilities.maxTextureSize,
+        const targetSize = Math.min(compactDisplay ? 1024 : 2048, renderer.capabilities.maxTextureSize,
             THREE.MathUtils.ceilPowerOfTwo(Math.max(256, halfExtent * 4)));
         if (lensView.width !== targetSize) {
             lensView.setSize(targetSize, targetSize);
@@ -403,6 +407,63 @@
     const textMaterial = new THREE.MeshStandardMaterial({
         color: 0x333333, metalness: 0.1, roughness: 1
     });
+    // TextGeometry repeats each triangle's vertices and includes unused UVs.
+    // Share identical positions/normals without changing the raised surface.
+    function buildTypeGeometry(text, font, curveSegments) {
+        const source = new THREE.TextGeometry(text, {
+            font, size: 0.5, height: 0.1, curveSegments, bevelEnabled: false
+        });
+        const positions = source.attributes.position.array;
+        const normals = source.attributes.normal.array;
+        const vertices = new Map();
+        const packedPositions = [], packedNormals = [], indices = [];
+        for (let offset = 0; offset < positions.length; offset += 3) {
+            const position = [positions[offset], positions[offset + 1], positions[offset + 2]];
+            const normal = [normals[offset], normals[offset + 1], normals[offset + 2]];
+            const key = [...position, ...normal].join(',');
+            let index = vertices.get(key);
+            if (index === undefined) {
+                index = packedPositions.length / 3;
+                vertices.set(key, index);
+                packedPositions.push(...position);
+                packedNormals.push(...normal);
+            }
+            indices.push(index);
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(packedPositions, 3));
+        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(packedNormals, 3));
+        geometry.setIndex(indices);
+        geometry.computeBoundingSphere();
+        source.dispose();
+        return geometry;
+    }
+    const rollerLabels = [];
+    const baseTypeGeometry = new WeakMap();
+    const detailedTypeLabels = new Set();
+    let typeFont = null;
+    let typeLines = [];
+    let requestedDetailRow = null;
+    let typeDetailVersion = 0;
+    async function detailSelectedRoller(rowIndex) {
+        if (!typeFont || requestedDetailRow === rowIndex) return;
+        requestedDetailRow = rowIndex;
+        const version = ++typeDetailVersion;
+        // Bound the full-detail cache to the selected roller, even after typing
+        // through all 36 cards. Every other roller keeps its raised base type.
+        for (const label of detailedTypeLabels) {
+            label.geometry.dispose();
+            label.geometry = baseTypeGeometry.get(label);
+        }
+        detailedTypeLabels.clear();
+        for (const [face, label] of rollerLabels[rowIndex].entries()) {
+            if (version !== typeDetailVersion) return;
+            label.geometry = buildTypeGeometry(typeLines[rowIndex * facesPerRoller + face] || '', typeFont, 6);
+            detailedTypeLabels.add(label);
+            requestRender();
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+    }
     Promise.all([
         window.simulatorLoading.loadText('dev/wubi06.txt', 'rollerText', 24479),
         window.simulatorLoading.loadText('assets/FangSong_GB2312_Regular.json', 'rollerFont', 9580942)
@@ -415,17 +476,18 @@
             material.normalScale.set(0.35, 0.35);
             material.needsUpdate = true;
         }
-        const lines = data.split(/\r?\n/);
+        typeLines = data.split(/\r?\n/);
         const totalFaces = rollers.length * facesPerRoller;
         let completed = 0;
         let batchStarted = performance.now();
         for (const [rowIndex, roller] of rollers.entries()) {
+            const labels = [];
+            rollerLabels.push(labels);
             for (let face = 0; face < facesPerRoller; face++) {
-                const geometry = new THREE.TextGeometry(lines[rowIndex * facesPerRoller + face] || '', {
-                    font, size: 0.5, height: 0.1,
-                    curveSegments: 6, bevelEnabled: false
-                });
+                const geometry = buildTypeGeometry(typeLines[rowIndex * facesPerRoller + face] || '', font, compactDisplay ? 1 : 2);
                 const label = new THREE.Mesh(geometry, textMaterial);
+                labels.push(label);
+                baseTypeGeometry.set(label, geometry);
                 const angle = turn * face / facesPerRoller;
                 label.rotation.x = Math.PI / 2 - angle;
                 label.position.set(
@@ -443,6 +505,9 @@
                 }
             }
         }
+        typeFont = font;
+        await detailSelectedRoller(row);
+        requestRender();
         window.simulatorLoading?.ready('mechanism');
     }).catch(error => {
         console.error('Unable to load roller lettering:', error);
@@ -475,6 +540,7 @@
         // Rebuild from two angles so mixed drags cannot accumulate roll.
         // Z is the mechanism's upright axis; X is the screen's horizontal axis.
         mechanism.rotation.set(pitch, 0, yaw, 'XZY');
+        requestRender();
     }
     const pointers = new Map();
     let pinch = null;
@@ -487,12 +553,14 @@
     function zoomView(zoom) {
         camera.zoom = THREE.MathUtils.clamp(zoom, 0.5, 6);
         camera.updateProjectionMatrix();
+        requestRender();
     }
     function resetView() {
         // Touch browsers may also synthesize dblclick after the second tap.
         if (viewReset) return;
         viewReset = { yaw, pitch, zoom: camera.zoom, started: performance.now() };
         updateResetView(viewReset.started);
+        requestRender(viewResetDuration);
     }
     function updateResetView(now) {
         if (!viewReset) return;
@@ -581,11 +649,22 @@
     // Resize the drawing buffer together with its next render. Clearing it
     // from ResizeObserver would expose a blank canvas between animation frames.
     let rendererNeedsResize = true;
-    new ResizeObserver(() => { rendererNeedsResize = true; }).observe(container);
+    new ResizeObserver(() => {
+        rendererNeedsResize = true;
+        requestRender();
+    }).observe(container);
 
     const clock = new THREE.Clock();
     let initialized = false;
+    let frameRequest = null;
+    let renderUntil = 0;
+    function requestRender(duration = 0) {
+        renderUntil = Math.max(renderUntil, performance.now() + duration);
+        if (frameRequest === null && !document.hidden) frameRequest = requestAnimationFrame(animate);
+    }
+    window.requestMechanismRender = requestRender;
     function animate() {
+        frameRequest = null;
         if (rendererNeedsResize) {
             resize();
             rendererNeedsResize = false;
@@ -596,6 +675,9 @@
         const selection = currentMechanismSelection();
         updateCardStack(selection.row);
         updateCardReader(selection.column);
+        if (Math.abs(selection.row - row) < 0.001) {
+            detailSelectedRoller(row).catch(error => console.error('Unable to refine roller lettering:', error));
+        }
         const largeAngle = selection.large;
         const mediumAngle = selection.medium;
         large.rotation.x = THREE.MathUtils.lerp(large.rotation.x, largeAngle, blend);
@@ -613,12 +695,18 @@
         initialized = true;
         scene.updateMatrixWorld(true);
         camera.updateMatrixWorld();
-        renderLensView();
+        if (eyepieceGlassEnabled) renderLensView();
         renderer.render(scene, camera);
+        if (performance.now() < renderUntil) requestRender();
     }
-    renderer.setAnimationLoop(animate);
+    requestRender();
     document.addEventListener('visibilitychange', () => {
         clock.getDelta();
-        renderer.setAnimationLoop(document.hidden ? null : animate);
+        if (document.hidden) {
+            if (frameRequest !== null) cancelAnimationFrame(frameRequest);
+            frameRequest = null;
+        } else {
+            requestRender(1600);
+        }
     });
 })();

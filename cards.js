@@ -34,6 +34,13 @@
     function codeBadge(x, y, radius) {
         return element('circle', { class: 'code-badge', cx: x, cy: y, r: radius });
     }
+    function roundedRectPath({ x, y, width, height, rx = 0 }) {
+        const r = Math.min(rx, width / 2, height / 2);
+        return `M${x + r} ${y} H${x + width - r} A${r} ${r} 0 0 1 ${x + width} ${y + r}
+            V${y + height - r} A${r} ${r} 0 0 1 ${x + width - r} ${y + height}
+            H${x + r} A${r} ${r} 0 0 1 ${x} ${y + height - r}
+            V${y + r} A${r} ${r} 0 0 1 ${x + r} ${y} Z`;
+    }
     function createCard(card, index, count, { idPrefix = `card-${index}`, bodyOpacity = 1, shadow: drawShadow = true } = {}) {
         const svg = element('g', { class: 'mingkwai-card', opacity: 1, 'data-card-key': card.key });
         const tabLeft = MARGIN + index * (WIDTH - 2 * MARGIN - TAB_WIDTH) / Math.max(1, count - 1);
@@ -60,21 +67,20 @@
         const defs = element('defs');
         const paper = element('linearGradient', { id: `${idPrefix}-paper`, x1: '0', y1: '0', x2: '0', y2: '1' });
         paper.append(element('stop', { offset: '0', 'stop-color': '#fff7e2' }), element('stop', { offset: '1', 'stop-color': '#eee1bf' }));
-        const shadow = element('filter', { id: `${idPrefix}-paper-shadow`, x: '-5%', y: '-20%', width: '110%', height: '150%' });
-        shadow.append(element('feDropShadow', { dx: '0', dy: '6', stdDeviation: '5', 'flood-color': '#16281b', 'flood-opacity': '.25' }));
-        const mask = element('mask', { id: `${idPrefix}-slit-cutouts`, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: WIDTH, height: HEIGHT, style: 'mask-type: luminance' });
-        mask.append(element('rect', { width: WIDTH, height: HEIGHT, fill: 'white' }));
-        card.blocks.forEach((block, column) => {
-            mask.append(element('rect', {
-                x: MARGIN + column * PITCH,
-                y: SLIT_TOP, width: SLIT_WIDTH, height: SLIT_HEIGHT, rx: 2, fill: 'black'
-            }));
-        });
-        mask.append(element('rect', {
-            'data-tab-slit': '', x: tabSlitLeft, y: tabSlitTop,
-            width: TAB_SLIT_WIDTH, height: TAB_SLIT_HEIGHT, rx: TAB_SLIT_WIDTH / 2, fill: 'black'
+        const cutouts = card.blocks.map((block, column) => roundedRectPath({
+            x: MARGIN + column * PITCH,
+            y: SLIT_TOP, width: SLIT_WIDTH, height: SLIT_HEIGHT, rx: 2
         }));
-        defs.append(paper, shadow, mask);
+        cutouts.push(roundedRectPath({
+            x: tabSlitLeft, y: tabSlitTop,
+            width: TAB_SLIT_WIDTH, height: TAB_SLIT_HEIGHT, rx: TAB_SLIT_WIDTH / 2
+        }));
+        defs.append(paper);
+        if (drawShadow) {
+            const shadow = element('filter', { id: `${idPrefix}-paper-shadow`, x: '-5%', y: '-20%', width: '110%', height: '150%' });
+            shadow.append(element('feDropShadow', { dx: '0', dy: '6', stdDeviation: '5', 'flood-color': '#16281b', 'flood-opacity': '.25' }));
+            defs.append(shadow);
+        }
         // Keep the same circular curvature. Separate upper and lower tangent
         // joins accommodate the raised centers without changing the tab height.
         const topTabOutline = `Q${tabLeft + 2} ${BODY_TOP} ${tabLeft + 3} ${BODY_TOP - 4}
@@ -97,20 +103,22 @@
             H${WIDTH - 11} ${rightEdgeOutline}
             H${bottomTabStart} ${bottomTabOutline}
             H11 ${leftEdgeOutline} Z`;
-        const tabClip = element('clipPath', { id: `${idPrefix}-tab-regions`, clipPathUnits: 'userSpaceOnUse' });
-        tabClip.append(
-            element('rect', { x: 0, y: 0, width: WIDTH, height: BODY_TOP }),
-            element('rect', { x: 0, y: BODY_BOTTOM, width: WIDTH, height: HEIGHT - BODY_BOTTOM })
-        );
-        defs.append(tabClip);
+        // Even-odd filling cuts real holes in the stock without mask surfaces.
+        const perforatedOutline = `${outline} ${cutouts.join(' ')}`;
         const stock = element('g', drawShadow ? { filter: `url(#${idPrefix}-paper-shadow)` } : {});
         // A continuous base fill prevents a hairline between separately clipped
         // regions. Opaque tab fills cover that base; lettering stays outside it.
-        stock.append(
-            element('path', { class: 'card-body', d: outline, fill: `url(#${idPrefix}-paper)`, 'fill-opacity': bodyOpacity, mask: `url(#${idPrefix}-slit-cutouts)` }),
-            element('path', { class: 'card-tabs', d: outline, fill: `url(#${idPrefix}-paper)`, 'clip-path': `url(#${idPrefix}-tab-regions)`, mask: `url(#${idPrefix}-slit-cutouts)` }),
-            element('path', { class: 'card-outline', d: outline, fill: 'none', stroke: '#c3ac7d', 'stroke-width': 1 })
-        );
+        stock.append(element('path', { class: 'card-body', d: perforatedOutline, 'fill-rule': 'evenodd', fill: `url(#${idPrefix}-paper)`, 'fill-opacity': bodyOpacity }));
+        if (bodyOpacity < 1) {
+            const tabClip = element('clipPath', { id: `${idPrefix}-tab-regions`, clipPathUnits: 'userSpaceOnUse' });
+            tabClip.append(
+                element('rect', { x: 0, y: 0, width: WIDTH, height: BODY_TOP }),
+                element('rect', { x: 0, y: BODY_BOTTOM, width: WIDTH, height: HEIGHT - BODY_BOTTOM })
+            );
+            defs.append(tabClip);
+            stock.append(element('path', { class: 'card-tabs', d: perforatedOutline, 'fill-rule': 'evenodd', fill: `url(#${idPrefix}-paper)`, 'clip-path': `url(#${idPrefix}-tab-regions)` }));
+        }
+        stock.append(element('path', { class: 'card-outline', d: outline, fill: 'none', stroke: '#c3ac7d', 'stroke-width': 1 }));
         svg.replaceChildren(title, description, defs, stock);
         svg.append(text(tabCenter, 35, card.key, 'tab-key'));
         svg.append(text(tabCenter, 51, String(index + 1).padStart(2, '0'), 'tab-number'));
@@ -154,7 +162,7 @@
         return result;
     }
     window.MingKwaiCards = Object.freeze({
-        width: WIDTH, height: HEIGHT, createCard, groupCards,
+        width: WIDTH, height: HEIGHT, createCard, groupCards, roundedRectPath,
         slitAt: column => ({ x: MARGIN + column * PITCH, y: SLIT_TOP, width: SLIT_WIDTH, height: SLIT_HEIGHT, rx: 2 }),
         // Shift each text column into the common slit immediately to its left.
         selectionShift: -PITCH / 2
