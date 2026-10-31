@@ -1,3 +1,13 @@
+// Shared by the candidate selector and the mechanical animation.
+const machineLayout = Object.freeze({
+    groupCount: 6,
+    rollersPerGroup: 6,
+    facesPerRoller: 8,
+    columnCount: 28,
+    rowKeys: 'GFDSA!HJKLM@TREWQ#YUIOP$NBVCX%^&*()Z',
+    columnKeys: 'qazwsxedcrfvtgbyhnujmik9ol0p'
+});
+
 const magicEye = document.getElementById('magic_eye');
 const candidateTable = document.getElementById('table');
 let rect = magicEye.getBoundingClientRect();
@@ -6,13 +16,13 @@ let spacing = [32, 32];
 let blocks = [];
 
 // These values also drive the mechanical animation.
-var row = 19;
-var col = 14;
+var row = machineLayout.rowKeys.indexOf('P');
+var col = machineLayout.columnKeys.indexOf('b');
 var tableFrom = 0;
 var tableTo = 0;
-var largeFrom = Math.PI * 2 * Math.floor(row / 5) / 5;
+var largeFrom = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount;
 var largeTo = largeFrom;
-var mediumFrom = Math.PI * 2 * (row % 5) / 5;
+var mediumFrom = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
 var mediumTo = mediumFrom;
 var ind = -1;
 
@@ -60,8 +70,8 @@ function layoutMagicEye() {
     const position = selectedPosition();
     if (!position) return;
     tableFrom = tableTo = position.top;
-    largeFrom = largeTo = Math.PI * 2 * Math.floor(row / 5) / 5;
-    mediumFrom = mediumTo = Math.PI * 2 * (row % 5) / 5;
+    largeFrom = largeTo = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount;
+    mediumFrom = mediumTo = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
     d3.select(candidateTable).style('left', `${position.left}px`).style('top', `${position.top}px`);
 
     const openingWidth = position.width + 2 * spacing[0] / 3;
@@ -75,14 +85,14 @@ layoutMagicEye();
 new ResizeObserver(layoutMagicEye).observe(magicEye);
 document.fonts.ready.then(layoutMagicEye);
 
-window.simulatorLoading.loadText('dev/wubi06.csv', 'candidateDownload', 28354).then(source => {
+window.simulatorLoading.loadText('dev/wubi06.csv', 'candidateDownload', 43933).then(source => {
     const data = d3.csvParse(source);
     blocks = data;
     // Build the same markup in Jekyll and plain static previews.
     const body = document.createElement('tbody');
     let tableRow;
     data.forEach((block, index) => {
-        if (index % 28 === 0) tableRow = body.insertRow();
+        if (index % machineLayout.columnCount === 0) tableRow = body.insertRow();
         const cell = tableRow.insertCell();
         const card = document.createElement('div');
         card.className = 'eight';
@@ -90,7 +100,7 @@ window.simulatorLoading.loadText('dev/wubi06.csv', 'candidateDownload', 28354).t
         characters.className = 'characters';
         const choices = Array.from(block.chars || '');
         const originalCount = Array.from(block.original || '').length;
-        for (let choice = 0; choice < 8; choice++) {
+        for (let choice = 0; choice < machineLayout.facesPerRoller; choice++) {
             const borrowed = choice >= originalCount && choices[choice];
             const character = document.createElement(borrowed ? 'em' : 'span');
             character.className = 'candidate';
@@ -102,7 +112,7 @@ window.simulatorLoading.loadText('dev/wubi06.csv', 'candidateDownload', 28354).t
         }
         const hint = document.createElement('span');
         hint.className = 'hint';
-        const hintText = document.createElement('i');
+        const hintText = document.createElement('code');
         hintText.textContent = block.hint || '';
         hint.append(hintText);
         card.append(characters, hint);
@@ -130,23 +140,24 @@ let composing = false;
 const touchKeyboard = window.matchMedia('(any-pointer: coarse)');
 
 function typeKey(key, mobile = false) {
-    const newRow = 'GFDSAHJKLMTREWQYUIOPNBVCX'.indexOf(key);
-    const newCol = 'qazwsxedcrfvtgbyhnujmikolp[]'.indexOf(key);
+    const newRow = machineLayout.rowKeys.indexOf(key);
+    const newCol = machineLayout.columnKeys.indexOf(key);
     const choice = '12345678 '.indexOf(key);
     if (key.length !== 1 || (newRow === -1 && newCol === -1 && choice === -1)) return;
 
     if (newRow !== -1 && newRow !== row) {
-        const middleDiff = Math.abs(newRow - row) % 5;
-        const largeDiff = Math.floor(Math.abs(newRow - row) / 5);
-        playSound(sound_gear[Math.max(middleDiff, largeDiff) - 1]);
+        const middleDiff = Math.abs(newRow % machineLayout.rollersPerGroup - row % machineLayout.rollersPerGroup);
+        const largeDiff = Math.abs(Math.floor(newRow / machineLayout.rollersPerGroup) - Math.floor(row / machineLayout.rollersPerGroup));
+        const gearSteps = Math.max(middleDiff, largeDiff);
+        playSound(sound_gear[Math.min(gearSteps, sound_gear.length) - 1]);
         const currentTop = parseFloat(candidateTable.style.top) || 0;
         const progress = tableFrom === tableTo ? 1 : Math.max(0, Math.min(1, (currentTop - tableFrom) / (tableTo - tableFrom)));
         largeFrom += (largeTo - largeFrom) * progress;
         mediumFrom += (mediumTo - mediumFrom) * progress;
         tableFrom = currentTop;
         row = newRow;
-        largeTo = Math.PI * 2 * Math.floor(row / 5) / 5;
-        mediumTo = Math.PI * 2 * (row % 5) / 5;
+        largeTo = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount;
+        mediumTo = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
         const position = selectedPosition();
         if (position) {
             tableTo = position.top;
@@ -155,13 +166,11 @@ function typeKey(key, mobile = false) {
         }
     }
     if (newCol !== -1) {
-        if (key >= 'a' && key <= 'z') {
-            const distance = Math.abs(newCol - col);
-            sound_swoosh.playbackRate = 1 / Math.min(2, 1 + distance / 10);
-            sound_swoosh.preservesPitch = true;
-            sound_swoosh.currentTime = 0;
-            playSound(sound_swoosh);
-        }
+        const distance = Math.abs(newCol - col);
+        sound_swoosh.playbackRate = 1 / Math.min(2, 1 + distance / 10);
+        sound_swoosh.preservesPitch = true;
+        sound_swoosh.currentTime = 0;
+        playSound(sound_swoosh);
         col = newCol;
         const position = selectedPosition();
         if (position) {
@@ -171,7 +180,7 @@ function typeKey(key, mobile = false) {
         }
     }
     if (choice !== -1) {
-        const block = blocks[row * 28 + col];
+        const block = blocks[row * machineLayout.columnCount + col];
         if (!block && choice !== 8) return;
         releaseStrike();
         ind = choice;
@@ -206,7 +215,7 @@ document.addEventListener('keydown', event => {
     // Some software keyboards report physical-looking codes and immediately
     // send keyup. On touch devices, use committed input and a timed strike.
     if (editable && (touchKeyboard.matches || !event.code || event.keyCode === 229)) return;
-    if (event.key.length !== 1 || !'GFDSAHJKLMTREWQYUIOPNBVCXqazwsxedcrfvtgbyhnujmikolp[]12345678 '.includes(event.key)) return;
+    if (event.key.length !== 1 || !(machineLayout.rowKeys + machineLayout.columnKeys + '12345678 ').includes(event.key)) return;
     event.preventDefault();
     if (event.repeat) return;
     typeKey(event.key);

@@ -3,6 +3,7 @@
     const container = document.getElementById('animation');
     const table = document.getElementById('table');
     const paper = document.getElementById('text');
+    const { groupCount, rollersPerGroup, facesPerRoller, columnCount } = machineLayout;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -27,30 +28,32 @@
     });
     const rollerRadius = 1;
     const capRadius = 1.025;
-    const rollerOrbitRadius = 2;
-    const mediumOrbitRadius = 5;
-    const rollerGeometry = new THREE.CylinderGeometry(rollerRadius, rollerRadius, 20, 8);
-    const capGeometry = new THREE.CylinderGeometry(capRadius, capRadius, 0.16, 8);
+    // Keep clearance between all six caps and between the rotating assemblies.
+    const rollerOrbitRadius = (2 * capRadius + 0.1) / (2 * Math.sin(Math.PI / rollersPerGroup));
+    const mediumOrbitRadius = (2 * (rollerOrbitRadius + capRadius) + 0.15) / (2 * Math.sin(Math.PI / groupCount));
+    const rollerGeometry = new THREE.CylinderGeometry(rollerRadius, rollerRadius, 20, facesPerRoller);
+    const capGeometry = new THREE.CylinderGeometry(capRadius, capRadius, 0.16, facesPerRoller);
     const axleGeometry = new THREE.CylinderGeometry(0.24, 0.24, 21.4, 24);
     // User inspection stays separate from the keyboard-driven roller pivots.
     const mechanism = new THREE.Group();
     scene.add(mechanism);
     const large = new THREE.Group();
     mechanism.add(large);
+    const mediumGroups = [];
     const rollers = [];
     const turn = Math.PI * 2;
 
-    // Wrap the five roller centers with tangent lines and circular corners.
+    // Wrap the six roller centers with tangent lines and circular corners.
     // Each corner is concentric with a roller; its beveled edge matches the cap.
     const hubOutline = new THREE.Shape();
-    for (let corner = 0; corner < 5; corner++) {
-        const angle = Math.PI + turn * corner / 5;
+    for (let corner = 0; corner < rollersPerGroup; corner++) {
+        const angle = Math.PI + turn * corner / rollersPerGroup;
         hubOutline.absarc(
             rollerOrbitRadius * Math.cos(angle),
             rollerOrbitRadius * Math.sin(angle),
             rollerRadius,
-            angle - Math.PI / 5,
-            angle + Math.PI / 5,
+            angle - Math.PI / rollersPerGroup,
+            angle + Math.PI / rollersPerGroup,
             false
         );
     }
@@ -68,20 +71,21 @@
     function cylinder(geometry, material, parent, x = 0) {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.rotation.z = Math.PI / 2;
-        mesh.rotation.x = Math.PI / 8;
+        mesh.rotation.x = Math.PI / facesPerRoller;
         mesh.position.x = x;
         parent.add(mesh);
         return mesh;
     }
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < groupCount; i++) {
         const medium = new THREE.Group();
-        const angle = turn * i / 5;
+        const angle = turn * i / groupCount;
         medium.position.set(0, -mediumOrbitRadius * Math.cos(angle), mediumOrbitRadius * Math.sin(angle));
         large.add(medium);
-        for (let j = 0; j < 5; j++) {
+        mediumGroups.push(medium);
+        for (let j = 0; j < rollersPerGroup; j++) {
             const small = new THREE.Group();
-            const angle = turn * j / 5;
+            const angle = turn * j / rollersPerGroup;
             small.position.set(0, -rollerOrbitRadius * Math.cos(angle), rollerOrbitRadius * Math.sin(angle));
             small.rotation.x = -angle;
             medium.add(small);
@@ -99,52 +103,82 @@
     }
     cylinder(new THREE.CylinderGeometry(0.4, 0.4, 22.4, 32), brass, large);
 
-    // Two five-spoke wheels carry the pentagonal assemblies on the central shaft.
-    // Their radius matches the orbit of the five medium rollers, so each spoke
-    // meets a pentagon's pivot rather than an edge of its rotating end plate.
-    const wheelRimGeometry = new THREE.TorusGeometry(mediumOrbitRadius, 0.14, 16, 96);
-    const wheelTrimGeometry = new THREE.TorusGeometry(mediumOrbitRadius, 0.035, 12, 96);
-    const spokeGeometry = new THREE.CylinderGeometry(0.18, 0.1, mediumOrbitRadius, 16);
-    const wheelHubGeometry = new THREE.CylinderGeometry(0.72, 0.72, 0.48, 32);
+    // A continuous, six-armed casting replaces each wheel and its spokes.
+    // Broad roots flow into narrow, rounded tips centered on the roller pivots.
+    const supportOutline = new THREE.Shape();
+    const armRootRadius = mediumOrbitRadius * 0.42;
+    const armTipRadius = 0.48;
+    const rootTangent = mediumOrbitRadius * 0.15;
+    const tipTangent = mediumOrbitRadius * 0.35;
+    function supportPoint(angle, radius, tangent = 0) {
+        return new THREE.Vector2(
+            radius * Math.cos(angle) - tangent * Math.sin(angle),
+            radius * Math.sin(angle) + tangent * Math.cos(angle)
+        );
+    }
+    for (let arm = 0; arm < groupCount; arm++) {
+        const angle = Math.PI + turn * arm / groupCount;
+        const before = angle - Math.PI / groupCount;
+        const after = angle + Math.PI / groupCount;
+        const valley = supportPoint(before, armRootRadius);
+        const rootControl = supportPoint(before, armRootRadius, rootTangent);
+        const tipControl = supportPoint(angle, mediumOrbitRadius - tipTangent, -armTipRadius);
+        const tipStart = supportPoint(angle, mediumOrbitRadius, -armTipRadius);
+        const tipCenter = supportPoint(angle, mediumOrbitRadius);
+        if (arm === 0) supportOutline.moveTo(valley.x, valley.y);
+        supportOutline.bezierCurveTo(
+            rootControl.x, rootControl.y, tipControl.x, tipControl.y, tipStart.x, tipStart.y
+        );
+        supportOutline.absarc(tipCenter.x, tipCenter.y, armTipRadius,
+            angle - Math.PI / 2, angle + Math.PI / 2, false);
+        const returnControl = supportPoint(angle, mediumOrbitRadius - tipTangent, armTipRadius);
+        const nextRootControl = supportPoint(after, armRootRadius, -rootTangent);
+        const nextValley = supportPoint(after, armRootRadius);
+        supportOutline.bezierCurveTo(
+            returnControl.x, returnControl.y, nextRootControl.x, nextRootControl.y,
+            nextValley.x, nextValley.y
+        );
+    }
+    supportOutline.closePath();
+    const supportGeometry = new THREE.ExtrudeGeometry(supportOutline, {
+        depth: 0.24, steps: 1, curveSegments: 20,
+        bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.045, bevelSegments: 3
+    });
+    supportGeometry.translate(0, 0, -0.12);
+    supportGeometry.rotateX(Math.PI / 2);
+    supportGeometry.rotateZ(Math.PI / 2);
+    const supportMetal = darkMetal.clone();
+    supportMetal.color.setHex(0x1b2826);
+    const supportHubGeometry = new THREE.CylinderGeometry(0.72, 0.72, 0.48, 32);
     const bearingGeometry = new THREE.CylinderGeometry(0.28, 0.28, 0.45, 24);
     const pivotCapGeometry = new THREE.CylinderGeometry(0.38, 0.38, 0.08, 24);
     for (const side of [-1, 1]) {
-        const wheel = new THREE.Group();
-        wheel.name = side < 0 ? 'left-support-wheel' : 'right-support-wheel';
-        wheel.position.x = side * 10.85;
-        large.add(wheel);
+        const support = new THREE.Group();
+        support.name = side < 0 ? 'left-starfish-support' : 'right-starfish-support';
+        support.position.x = side * 10.85;
+        large.add(support);
 
-        const rim = new THREE.Mesh(wheelRimGeometry, darkMetal);
-        rim.rotation.y = Math.PI / 2;
-        wheel.add(rim);
-        const trim = new THREE.Mesh(wheelTrimGeometry, brass);
-        trim.rotation.y = Math.PI / 2;
-        trim.position.x = side * 0.13;
-        wheel.add(trim);
-        cylinder(wheelHubGeometry, brass, wheel);
+        // Brass on the bevel traces the smooth boundary of the dark metal face.
+        const body = new THREE.Mesh(supportGeometry, [supportMetal, brass]);
+        support.add(body);
+        cylinder(supportHubGeometry, brass, support);
 
-        for (let i = 0; i < 5; i++) {
-            const angle = turn * i / 5;
+        for (let i = 0; i < groupCount; i++) {
+            const angle = turn * i / groupCount;
             const y = -mediumOrbitRadius * Math.cos(angle);
             const z = mediumOrbitRadius * Math.sin(angle);
-            const spoke = new THREE.Mesh(spokeGeometry, steel);
-            spoke.name = `spoke-${i}`;
-            spoke.rotation.x = -angle;
-            spoke.position.set(0, y / 2, z / 2);
-            wheel.add(spoke);
-
-            // Short journals join the wheel to the independently turning plates.
-            const bearing = cylinder(bearingGeometry, brass, wheel, -side * 0.225);
+            // Short journals join each arm tip to an independently turning plate.
+            const bearing = cylinder(bearingGeometry, brass, support, -side * 0.225);
             bearing.name = `bearing-${i}`;
             bearing.position.y = y;
             bearing.position.z = z;
-            const cap = cylinder(pivotCapGeometry, darkMetal, wheel, side * 0.16);
+            const cap = cylinder(pivotCapGeometry, supportMetal, support, side * 0.18);
             cap.position.y = y;
             cap.position.z = z;
         }
     }
 
-    scene.add(new THREE.HemisphereLight(0xf5faff, 0x74634b, 1.1));
+    scene.add(new THREE.HemisphereLight(0xf5faff, 0x74634b, 0.9));
     const keyLight = new THREE.DirectionalLight(0xffefda, 1.7);
     keyLight.position.set(-8, -12, 15);
     scene.add(keyLight);
@@ -254,7 +288,7 @@
         pyramid.rotation.y = angle;
         carriage.add(pyramid);
     }
-    carriage.position.set(0, -8.3, 0);
+    carriage.position.set(0, -(mediumOrbitRadius + rollerOrbitRadius + rollerRadius + 0.3), 0);
     mechanism.add(carriage);
 
     // Render a tightly cropped, supersampled view of the actual raised type.
@@ -275,7 +309,8 @@
             captureOrigin: { value: new THREE.Vector2() },
             captureSize: { value: new THREE.Vector2() },
             captureResolution: { value: new THREE.Vector2(256, 256) },
-            magnification: { value: 1.9 }
+            magnification: { value: 1.5 },
+            edgeFalloff: { value: 0.25 }
         },
         vertexShader: `
             varying vec2 lensUv;
@@ -292,13 +327,14 @@
             uniform vec2 captureSize;
             uniform vec2 captureResolution;
             uniform float magnification;
+            uniform float edgeFalloff;
             varying vec2 lensUv;
             void main() {
                 vec2 p = lensUv * 2.0 - 1.0;
                 float radius = length(p);
                 vec2 screenUv = gl_FragCoord.xy / resolution;
                 // Slightly less enlargement near the rim suggests curved glass.
-                float zoom = magnification - 0.22 * radius * radius;
+                float zoom = magnification - edgeFalloff * radius * radius;
                 vec2 sourceUv = lensCenter + (screenUv - lensCenter) / zoom;
                 vec2 sampleUv = (sourceUv - captureOrigin) / captureSize;
                 vec2 inset = 0.5 / captureResolution;
@@ -339,7 +375,7 @@
                     Math.abs((projectedLensCorner.y - projectedLensCenter.y) * height / 2));
             }
         }
-        const minimumZoom = uniforms.magnification.value - 0.22;
+        const minimumZoom = uniforms.magnification.value - uniforms.edgeFalloff.value;
         const cropSize = Math.ceil(halfExtent * 2 / minimumZoom + 4);
         // Bucket sizes avoid reallocating GPU buffers on every drag/zoom frame.
         const targetSize = Math.min(2048, renderer.capabilities.maxTextureSize,
@@ -366,10 +402,10 @@
 
     // Keep the original raised type, loading the shared font only once.
     const textMaterial = new THREE.MeshStandardMaterial({
-        color: 0x444444, metalness: 0.1, roughness: 1
+        color: 0x333333, metalness: 0.1, roughness: 1
     });
     Promise.all([
-        window.simulatorLoading.loadText('dev/wubi06.txt', 'rollerText', 16999),
+        window.simulatorLoading.loadText('dev/wubi06.txt', 'rollerText', 24479),
         window.simulatorLoading.loadText('assets/FangSong_GB2312_Regular.json', 'rollerFont', 9580942)
             .then(source => new THREE.FontLoader().parse(JSON.parse(source))),
         woodMapsReady
@@ -381,17 +417,17 @@
             material.needsUpdate = true;
         }
         const lines = data.split(/\r?\n/);
-        const totalFaces = rollers.length * 8;
+        const totalFaces = rollers.length * facesPerRoller;
         let completed = 0;
         let batchStarted = performance.now();
         for (const [rowIndex, roller] of rollers.entries()) {
-            for (let face = 0; face < 8; face++) {
-                const geometry = new THREE.TextGeometry(lines[rowIndex * 8 + face] || '', {
+            for (let face = 0; face < facesPerRoller; face++) {
+                const geometry = new THREE.TextGeometry(lines[rowIndex * facesPerRoller + face] || '', {
                     font, size: 0.5, height: 0.1,
                     curveSegments: 6, bevelEnabled: false
                 });
                 const label = new THREE.Mesh(geometry, textMaterial);
-                const angle = turn * face / 8;
+                const angle = turn * face / facesPerRoller;
                 label.rotation.x = Math.PI / 2 - angle;
                 label.position.set(
                     -9.75,
@@ -564,13 +600,13 @@
         const largeAngle = THREE.MathUtils.lerp(largeFrom, largeTo, selection);
         const mediumAngle = THREE.MathUtils.lerp(mediumFrom, mediumTo, selection);
         large.rotation.x = THREE.MathUtils.lerp(large.rotation.x, largeAngle, blend);
-        large.children.slice(0, 5).forEach((medium, i) => {
-            medium.rotation.x = THREE.MathUtils.lerp(medium.rotation.x, -turn * i / 5 + mediumAngle, blend);
+        mediumGroups.forEach((medium, i) => {
+            medium.rotation.x = THREE.MathUtils.lerp(medium.rotation.x, -turn * i / groupCount + mediumAngle, blend);
         });
         const strike = THREE.MathUtils.clamp(parseFloat(paper.style.getPropertyValue('--strike-progress')) || 0, 0, 1);
         rollers.forEach((roller, index) => {
-            const faceAngle = index === row && ind >= 0 && ind < 8 ? turn * ind / 8 * strike : 0;
-            const target = -turn * (index % 5) / 5 + faceAngle;
+            const faceAngle = index === row && ind >= 0 && ind < facesPerRoller ? turn * ind / facesPerRoller * strike : 0;
+            const target = -turn * (index % rollersPerGroup) / rollersPerGroup + faceAngle;
             roller.rotation.x = THREE.MathUtils.lerp(roller.rotation.x, target, blend);
         });
         const firstColumn = rect.width / 2 - rect2.width / 2 - Number(spacing[0]);
@@ -579,9 +615,9 @@
         // The CSV-built table has no inline position on the first frames.
         // Never feed NaN into lerp: it would keep the carriage invisible forever.
         const column = Number.isFinite(tableLeft) && columnWidth > 0
-            ? THREE.MathUtils.clamp((firstColumn - tableLeft) / columnWidth, 0, 27)
+            ? THREE.MathUtils.clamp((firstColumn - tableLeft) / columnWidth, 0, columnCount - 1)
             : col;
-        carriage.position.x = THREE.MathUtils.lerp(carriage.position.x, -9.75 + (column + 0.5) * 19.5 / 28, blend);
+        carriage.position.x = THREE.MathUtils.lerp(carriage.position.x, -9.75 + (column + 0.5) * 19.5 / columnCount, blend);
         initialized = true;
         scene.updateMatrixWorld(true);
         camera.updateMatrixWorld();

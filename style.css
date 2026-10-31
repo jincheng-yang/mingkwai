@@ -96,9 +96,36 @@ td {
     text-align: center;
 }
 
+.characters,
+#text {
+    color: #15221d;
+}
+
+.characters em {
+    color: #8a392c;
+}
+
 .hint {
     height: 1em;
     margin: 0.5em;
+}
+
+.hint code {
+    display: inline-block;
+    padding: 0.08em 0.3em;
+    border: 1px solid #c9c4b6;
+    border-radius: 4px;
+    background: #eae6dc;
+    color: #374846;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 0.8em;
+    font-style: normal;
+    line-height: 1.1;
+    white-space: pre;
+}
+
+.hint code:empty {
+    display: none;
 }
 
 em {
@@ -288,7 +315,8 @@ em {
     border: 1px solid #b9b19d;
     border-radius: 4px;
     background: #fffdf7;
-    font: inherit;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 0.9em;
 }
 
 .loading-tip, #loading-status {
