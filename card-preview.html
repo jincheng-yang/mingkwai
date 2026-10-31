@@ -1,0 +1,6499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>魔术眼字卡 · 结构预览</title>
+    <link rel="stylesheet" href="cards.css">
+    <style>
+        @font-face {
+            font-family: FangSong;
+            src: url('assets/fangsong.ttf') format('truetype');
+            font-display: swap;
+        }
+        :root {
+            color-scheme: light;
+            --ink: #24382f;
+            --muted: #738077;
+            --line: #d5d7ca;
+            --brass: #aa8950;
+            --code-red: #8a392c;
+            --mono: Menlo, Consolas, monospace;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #f3f3eb;
+            color: var(--ink);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        main { max-width: 1680px; margin: 0 auto; padding: 48px 40px 32px; }
+        .eyebrow {
+            margin: 0 0 12px;
+            color: #92733e;
+            font: 11px/1.5 var(--mono);
+            letter-spacing: 0.2em;
+        }
+        header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+        h1 { margin: 0; font: 34px/1.3 FangSong, serif; letter-spacing: 0.06em; }
+        .badge { margin-top: 7px; border: 1px solid var(--line); border-radius: 20px; padding: 6px 12px; white-space: nowrap; font-size: 12px; color: var(--muted); }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 28px;
+            padding: 18px 0;
+            border-top: 1px solid var(--line);
+        }
+        .control { display: flex; align-items: center; gap: 10px; }
+        label { font-size: 12px; color: #5c6b60; white-space: nowrap; }
+        select, button {
+            min-height: 38px;
+            border: 1px solid #c9cdbe;
+            border-radius: 6px;
+            background: #fffef6;
+            color: var(--ink);
+            font: 12px/1.3 var(--mono);
+        }
+        select { min-width: 168px; padding: 8px 30px 8px 10px; }
+        button { padding: 8px 12px; cursor: pointer; }
+        button:hover { border-color: var(--brass); background: #faf3df; }
+        button[aria-pressed="true"] { border-color: var(--brass); background: #f3e9d0; }
+        :focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+        input[type="range"] { width: 128px; accent-color: #987b47; }
+        output { width: 42px; font: 11px var(--mono); color: #6c766c; }
+        .zoom { margin-left: auto; }
+        .workbench {
+            overflow: hidden;
+            border: 1px solid #879386;
+            border-radius: 12px;
+            background: #53665b;
+            box-shadow: 0 10px 28px #23322912;
+        }
+        .bench-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 22px;
+            border-bottom: 1px solid #ffffff17;
+            color: #e1e6d7;
+            font-size: 12px;
+        }
+        .bench-heading span:last-child { color: #c0cbb9; font-family: var(--mono); font-size: 11px; }
+        #card-viewport {
+            min-height: 330px;
+            overflow: auto;
+            padding: 52px 32px;
+            scrollbar-color: #bcb99b #43564b;
+            background-color: #43564b;
+            background-image:
+                linear-gradient(#ffffff04 1px, transparent 1px),
+                linear-gradient(90deg, #ffffff04 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        #card-art { display: block; flex-shrink: 0; margin: 0 auto; overflow: visible; }
+        .legend { display: flex; flex-wrap: wrap; gap: 16px 26px; padding: 20px 0 16px; font-size: 12px; color: #667367; }
+        .legend span { display: inline-flex; align-items: center; gap: 7px; }
+        .swatch { width: 7px; height: 7px; border-radius: 50%; background: #15221d; }
+        .swatch.borrowed { background: #8a392c; }
+        .slit-swatch { width: 8px; height: 20px; border-radius: 2px; background: #43564b; }
+        .legend code, .legend kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border: .8px solid #c6b58e;
+            border-radius: 50%;
+            background: #e6dcc3;
+            color: var(--code-red);
+            font: 14px/1 var(--mono);
+        }
+        .legend kbd { border-color: #bdb6a5; border-radius: 5px; background: #f7f3e8; color: var(--ink); }
+        #data-status { color: #8a392c; font-size: 12px; }
+        @media (max-width: 700px) {
+            main { padding: 28px 18px; }
+            h1 { font-size: 27px; }
+            .badge { display: none; }
+            .zoom { margin-left: 0; flex-wrap: wrap; }
+            input[type="range"] { width: 100px; }
+            #card-viewport { padding: 40px 20px; min-height: 230px; }
+            .bench-heading { padding: 14px 16px; }
+        }
+        @media print {
+            @page { size: landscape; margin: 12mm; }
+            body { background: white; }
+            main { padding: 0; max-width: none; }
+            header, .toolbar, .bench-heading, .legend, #data-status { display: none; }
+            .workbench { border: 0; border-radius: 0; box-shadow: none; background: white; }
+            #card-viewport { padding: 0; min-height: 0; overflow: visible; background: white; }
+            #card-art { width: 100% !important; height: auto; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <div>
+            <p class="eyebrow">MINGKWAI / CARD</p>
+            <h1>魔术眼字卡</h1>
+        </div>
+        <span class="badge">结构预览</span>
+    </header>
+    <div class="toolbar" aria-label="字卡预览设置">
+        <div class="control">
+            <label for="card-select">滚筒字卡</label>
+            <select id="card-select"></select>
+        </div>
+        <div class="control zoom">
+            <label for="zoom">缩放</label>
+            <input id="zoom" type="range" min="10" max="160" step="1" value="100">
+            <output id="zoom-value" for="zoom">100%</output>
+            <button id="fit" type="button" aria-pressed="true">全卡</button>
+            <button id="actual-size" type="button" aria-pressed="false">100%</button>
+        </div>
+    </div>
+    <section class="workbench" aria-label="字卡外观">
+        <div class="bench-heading">
+            <span id="card-label">字卡 G</span>
+            <span>28 COLUMNS / 8 + 1 ROWS</span>
+        </div>
+        <div id="card-viewport" tabindex="0" aria-label="字卡画布，可横向滚动查看">
+            <svg id="card-art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1832 478" width="1832" height="478" role="img" aria-labelledby="preview-card-card-title preview-card-card-description"></svg>
+        </div>
+    </section>
+    <div class="legend" aria-label="图例">
+        <span><i class="slit-swatch" aria-hidden="true"></i>贯穿竖缝</span>
+        <span><i class="swatch" aria-hidden="true"></i>原位字</span>
+        <span><i class="swatch borrowed" aria-hidden="true"></i>借位字</span>
+        <span><code>9</code>翻页提示</span>
+    </div>
+    <p id="data-status" role="status" hidden></p>
+</main>
+<script src="cards.js"></script>
+<script id="card-data" type="application/json">
+[
+  {
+    "key": "G",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "万死列烈残殊裂殖",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "a",
+        "chars": "开形型刑弄邢琪瑾",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "z",
+        "chars": "毯穑竺毡稹秸筠犊",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "w",
+        "chars": "珍玲玑瑜玳玢琵珏",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "s",
+        "chars": "末琳珂玎亍氇氆毪",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "素互毒夷纛",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "表青静逐甫瑶敷逋",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "d",
+        "chars": "天环吞蚕琦瑚顼忝",
+        "originalCount": 8,
+        "hint": "j"
+      },
+      {
+        "key": "c",
+        "chars": "到至致玛臻郅玟",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "珠碧瑰珀瑛璜珙琊",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "于玩迂盂玮珐忮怃",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "妻瑙淄溉粱渌浔洳",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "麦玫瓒珩璁珞埏垧",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "g",
+        "chars": "一王五球琴瑟琢琶",
+        "originalCount": 8,
+        "hint": "w"
+      },
+      {
+        "key": "b",
+        "chars": "击顿屯珥璨琥忑璩",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "玉班琼璃斑璇琅琉",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "h",
+        "chars": "下正政焉玻丐玷鄢",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "n",
+        "chars": "与瓦欤瑕琚珉鼯鼢",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "平夹璋颊郏瘥瘅癔",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "理更惠琨瑁亘丌珑",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "现两再责刺丽遭曹",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "i",
+        "chars": "求救裘琐逑劐蔹",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "事带整速副吾吏束",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "9",
+        "chars": "豕瑗靓靛珈燹瑷",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "来亚严恶灭晋璞赉",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "l",
+        "chars": "画琏柬",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "鹄箸秆迕郜歃毳毽",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "p",
+        "chars": "琛琮琬珲戬琰垩瑭",
+        "originalCount": 4,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "F",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "无元远均顽坎雹坞",
+        "originalCount": 8,
+        "hint": "s"
+      },
+      {
+        "key": "a",
+        "chars": "域塔堪霸堰贲卉霰",
+        "originalCount": 8,
+        "hint": "m"
+      },
+      {
+        "key": "z",
+        "chars": "堵卦恚圭雩埴圬",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "夫规替零堆霍截逵",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "s",
+        "chars": "霜栽霖坷堙鼋坻堍",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "盏坳戋坶",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "协霓堋霾埒劫翅盍",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "城需坏震垮雳坯垅",
+        "originalCount": 8,
+        "hint": "V"
+      },
+      {
+        "key": "c",
+        "chars": "去动却云运支埃魂",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "r",
+        "chars": "垢坂圻坼埤唣哌哳",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "地土封款墙寺坛填",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "v",
+        "chars": "雪埽垠埭忿岔仞坌",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "者都老才教考孝雾",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "g",
+        "chars": "十二士干雨博寸垣",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "b",
+        "chars": "圾邗辇赍埠垛堠埝",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "裁坊坟坑壤雯壕墩",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "h",
+        "chars": "起走真直武越超赵",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "n",
+        "chars": "声场志专块卖违韦",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "u",
+        "chars": "增境幸丧培垃霎啬",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "进朝韩坦井刊翰乾",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "m",
+        "chars": "南献坝坍垲垌堞坩",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "未示霄嫠霪霈墚",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "喜吉露鼓嘉彭哉袁",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "9",
+        "chars": "坪埂埔圩垭垤塥",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "赤赫赦塘郝墉赭赧",
+        "originalCount": 8,
+        "hint": "J"
+      },
+      {
+        "key": "l",
+        "chars": "雷载戴塄泅溷漯洇",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "壹彀悫觳鹁坨垸",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "过索勃壳壶懿孛毂",
+        "originalCount": 8,
+        "hint": "0"
+      }
+    ]
+  },
+  {
+    "key": "D",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "克确砍兢砥鸪磔矽",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "左厮砸碟磺砌厝奁",
+        "originalCount": 8,
+        "hint": "B"
+      },
+      {
+        "key": "z",
+        "chars": "驼骁驯骏骠驹驸驭",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "w",
+        "chars": "春奏奉秦泰雁蠢礁",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "s",
+        "chars": "奇厅厢欹碴硒剞砒",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "龙袭戊垄龚聋砩砻",
+        "originalCount": 8,
+        "hint": "s"
+      },
+      {
+        "key": "e",
+        "chars": "历胡郁夯鹕硼觖觫",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "在大套厌硕厦碱魇",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "c",
+        "chars": "友雄码肆髦鬓鬟髯",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "r",
+        "chars": "原愿爽碑斫硌硇砟",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "压奔夺辰奈辱唇夸",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "v",
+        "chars": "碌厩砚碉碘鸸硐恧",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "故帮寿邦焘砾硪砭",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "g",
+        "chars": "三感石古研威厂硬",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "b",
+        "chars": "顾础厄耷驵骒骟骣",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "太态丈碎戍犬硫磅",
+        "originalCount": 8,
+        "hint": "k"
+      },
+      {
+        "key": "h",
+        "chars": "还存破否夏丰慧契",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "n",
+        "chars": "成盛尤尬臧尴碾砀",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "u",
+        "chars": "碰磁厥辜磋鹩砬碚",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "j",
+        "chars": "百厚碍厘奄碣鹌砷",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "而面布页耐耍碳厕",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "i",
+        "chars": "耕耗砂耙硝泵耘耪",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "k",
+        "chars": "右夼飙碲磙碥礅",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "驺骖骐骅骝骢骓骀",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "o",
+        "chars": "灰矿盔磷嘏尥尢",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "奋厍砗磊砺餍厣靥",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "驮骡骋骥骧骈骊驷",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "p",
+        "chars": "达牵碗碇砣碹劂",
+        "originalCount": 6,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "S",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "构柳桃榴檐橡橹桅",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "a",
+        "chars": "模横枢械柜棋框栋",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "z",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "机检松枪椎樵榆桧",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "s",
+        "chars": "要林木梦楚禁森焚",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "x",
+        "chars": "楷椽枇橼楦桉柁檫",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "棚杉枷桴桕杷杩柽",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "顶杯椅杖枯棒椿橱",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "c",
+        "chars": "权树桶梭懋橘杼杈",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "r",
+        "chars": "板析柏棉攀株槐樊",
+        "originalCount": 8,
+        "hint": "V"
+      },
+      {
+        "key": "f",
+        "chars": "标村材票杜植枝飘",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "v",
+        "chars": "根概棣棂楗黉",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "格梅桥覆枚榭杵橇",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "g",
+        "chars": "本西配丁醒醉酸酉",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "b",
+        "chars": "李极椭楹椰矬岙",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "术校述核柱杭榜梳",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "h",
+        "chars": "想相朴椒桢棹栌椐",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "杨札杞橄楣栩榍樨",
+        "originalCount": 8,
+        "hint": "h"
+      },
+      {
+        "key": "u",
+        "chars": "样梯栏梓樽樟榈槎",
+        "originalCount": 8,
+        "hint": "i"
+      },
+      {
+        "key": "j",
+        "chars": "查棍棵榻槛杳覃榄",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "贾樱桐栅柚枘桤枧",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "档梢榉杪樘桄桫榇",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "可哥歌杏楫枳枵榀",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "楼杰粟桩镤",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "椤楞柙槲杓枸柢桷",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "唛",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "棺枕棕榷榨槟榕柠",
+        "originalCount": 8,
+        "hint": "x"
+      }
+    ]
+  },
+  {
+    "key": "A",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "获警敬匹苟苑葡菊",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "a",
+        "chars": "工式戒匿芽苷萁苣",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "z",
+        "chars": "踮蹰趵躅趼踽踣蹀",
+        "originalCount": 0,
+        "hint": "E"
+      },
+      {
+        "key": "w",
+        "chars": "花共恐茶恭荷薛苍",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "s",
+        "chars": "苛茜苯蘸菥菘蕈葙",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "药蕴芗莼芎荭荜芘",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "e",
+        "chars": "功苏散菜藤荽茄荔",
+        "originalCount": 8,
+        "hint": "P"
+      },
+      {
+        "key": "d",
+        "chars": "其斯期基若甚苦项",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "c",
+        "chars": "茅茎苔芭蓣蒈荮",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "区欧艾匠殴鸥芹瓯",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "f",
+        "chars": "某甘贰芙菱芸芜苇",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "v",
+        "chars": "切萧荨茹菇芄薅艽",
+        "originalCount": 8,
+        "hint": "X"
+      },
+      {
+        "key": "t",
+        "chars": "攻医董蕃莉蓬尧翘",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "g",
+        "chars": "七巧莱葬荆戈匡苹",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "b",
+        "chars": "节著萨蒸荫茸邛芤",
+        "originalCount": 8,
+        "hint": "M"
+      },
+      {
+        "key": "y",
+        "chars": "荒芳蒂蓄芒芦匾萃",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "h",
+        "chars": "臣牙雅邪菲卧熙匪",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "n",
+        "chars": "世艺巨荩芯蔬蔚蕊",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "u",
+        "chars": "蒋蔽菩茨薪莘蕲薏",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "j",
+        "chars": "划莫草蓝幕昔慕葛",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "m",
+        "chars": "英黄贡匝芮苋遘萜",
+        "originalCount": 8,
+        "hint": "X"
+      },
+      {
+        "key": "i",
+        "chars": "东落范薄荡茫蒲萍",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "k",
+        "chars": "或革勒燕勤惑鞋鞭",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "9",
+        "chars": "躏啮跎卟蹒跹踹跞",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "o",
+        "chars": "蘑薮蔗蘼蒌孪脔娈",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "莲苗菌薨蔑匣萝茵",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "0",
+        "chars": "跽趿蹴跗跬跖跆蹉",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "p",
+        "chars": "营劳荣蒙芝莺蓉莹",
+        "originalCount": 8,
+        "hint": "!"
+      }
+    ]
+  },
+  {
+    "key": "!",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "挣挽魁撸掏兜魅捣",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "a",
+        "chars": "舛锚镆鸱铙镬锘钷",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "z",
+        "chars": "搀掐魑魃魉魍掬魈",
+        "originalCount": 0,
+        "hint": "j"
+      },
+      {
+        "key": "w",
+        "chars": "簦黍筏黏筱稔篌筌",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "s",
+        "chars": "猊猕锇橥猢狲犴狷",
+        "originalCount": 0,
+        "hint": "i"
+      },
+      {
+        "key": "x",
+        "chars": "藿薷薹蓍荸莰",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "艉舻舳艚艟艏舾舯",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "d",
+        "chars": "僚倚佑俸俦傣侑仨",
+        "originalCount": 0,
+        "hint": "Y"
+      },
+      {
+        "key": "c",
+        "chars": "邳砧戛砉孬恝",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "酩酹桠醛醍酎醐酾",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "f",
+        "chars": "邯蒜蔷蕾芰芏葑芫",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "v",
+        "chars": "枰醚醣桎酊酯酤杌",
+        "originalCount": 0,
+        "hint": "r"
+      },
+      {
+        "key": "t",
+        "chars": "煮霉霆耆耄圪翥耋",
+        "originalCount": 0,
+        "hint": "G"
+      },
+      {
+        "key": "g",
+        "chars": "嗽咧哺逞咦郢嘈饕",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "b",
+        "chars": "铘铽铹",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "谤谪谛谝谆谇亠讠",
+        "originalCount": 0,
+        "hint": "m"
+      },
+      {
+        "key": "h",
+        "chars": "戚艳歪丕彗蹙甭挈",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "n",
+        "chars": "汛湄濯潺泯汜涮澉",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "潼漳涧漾涪湔泮",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "揿",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "丶",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "狃狯猱狁锆钎狍狴",
+        "originalCount": 0,
+        "hint": "l"
+      },
+      {
+        "key": "k",
+        "chars": "忡嬖甓愦鐾悒擘襞",
+        "originalCount": 0,
+        "hint": "J"
+      },
+      {
+        "key": "9",
+        "chars": "舴徂艨舡艋舭舢舣",
+        "originalCount": 0,
+        "hint": "o"
+      },
+      {
+        "key": "o",
+        "chars": "稃",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "猃犸狺猡猁猞狨犰",
+        "originalCount": 0,
+        "hint": "H"
+      },
+      {
+        "key": "0",
+        "chars": "啄唔哽嗝啧嗷嗉囔",
+        "originalCount": 0,
+        "hint": "S"
+      },
+      {
+        "key": "p",
+        "chars": "荧萦蓿荥萤莞荤菀",
+        "originalCount": 0,
+        "hint": "#"
+      }
+    ]
+  },
+  {
+    "key": "H",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "餐睁瞻粲眺眵觜",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "虎虑虚虏虞彪瞒虔",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "z",
+        "chars": "鋈洎泺溴濞洫汔洚",
+        "originalCount": 0,
+        "hint": "e"
+      },
+      {
+        "key": "w",
+        "chars": "具瞧龄齿盼瞪龋睢",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "s",
+        "chars": "盯瞟猷遒鹇疴疔瘭",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "此些紫柴雌砦赀訾",
+        "originalCount": 8,
+        "hint": "q"
+      },
+      {
+        "key": "e",
+        "chars": "肯瞬睬睨瞍沲滗潲",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "非悲辈裴斐韭翡蜚",
+        "originalCount": 8,
+        "hint": "B"
+      },
+      {
+        "key": "c",
+        "chars": "皮颇眸眙攴睃谲",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "睥虐遽瞄觑眶眍虍",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "歧睹睦瞌眭砝矸刳",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "眼挚贽蛰鸷絷拶捃",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "睡眨瞅睐忐芈眄",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "g",
+        "chars": "督卡睛叔凸睫盱盹",
+        "originalCount": 8,
+        "hint": "t"
+      },
+      {
+        "key": "b",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "眩墒霁霭垓垴",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "上目步止频卜瞿矍",
+        "originalCount": 8,
+        "hint": "X"
+      },
+      {
+        "key": "n",
+        "chars": "卢鼎眠凹颅瞩瞰鸬",
+        "originalCount": 8,
+        "hint": "B"
+      },
+      {
+        "key": "u",
+        "chars": "瞳睇笠箪螽徉",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "旧桌卓茧郾菖莳蕞",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "贞卣剐呗嘣呙啁哕",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "眇瞠",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "点战占乩觇兑闾瓿",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "眯瞵翕觎龠佤毹",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "卤鹾狳猹猸铥勹犭",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "睿瞎壑瞑眈蓥",
+        "originalCount": 5,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "J",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "易晚歇昂晁遏冕蟾",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "a",
+        "chars": "暴晓虹蝶蜡蟆蠓蟒",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "z",
+        "chars": "墅蛙昙蚨旰蟛蝻",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "晔蛉暹蚣蛤蚧暌虮",
+        "originalCount": 8,
+        "hint": "x"
+      },
+      {
+        "key": "s",
+        "chars": "果颗晰晒杲夥蜥蚵",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "x",
+        "chars": "昆曳蚴蚓蚍晗蜍蝓",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "明盟暖暧蛆蜉螋螵",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "晨晟蝴蚌蛄蛎昃螈",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "c",
+        "chars": "紧坚贤竖肾蚂蛹蛑",
+        "originalCount": 8,
+        "hint": "C"
+      },
+      {
+        "key": "r",
+        "chars": "蝗蛛昕蚯蜱蝽螓蝰",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "时里早野旱昧暑蠕",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "v",
+        "chars": "照归昭旯蛘蟑蜣蝤",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "星监临昨鉴览蜂晌",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "g",
+        "chars": "师题量旦晴旺匙虾",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "b",
+        "chars": "最蜢剔曷昴煦昀蟓",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "影景蚁蛟蚊蟀颢蛴",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "h",
+        "chars": "曰申冒虫畅蠼勖刂",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "电暇曜昵虬遢蜾",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "暗蝉蜕曦昱蚪蟮蜷",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "j",
+        "chars": "是日昌晶曝蝎蛳蜴",
+        "originalCount": 8,
+        "hint": "n"
+      },
+      {
+        "key": "m",
+        "chars": "遇帅映愚禺蛐蚬蚋",
+        "originalCount": 8,
+        "hint": "B"
+      },
+      {
+        "key": "i",
+        "chars": "晃螳蛸耧耔耱耩耥",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "蝇蜗蜈檗",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "显旷炅蠊蝼螗螫圹",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "曼螺蛔曙蛊蝈铟镙",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "蛇晕晏晖暄暝蜿螟",
+        "originalCount": 8,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "K",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "兄吹鸣唤吻呜噜哆",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "a",
+        "chars": "呀哄哎嘶呕噶唠喏",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "z",
+        "chars": "咯唾咚咋噬吒啾",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "只哈唯咐吟吩啥喉",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "s",
+        "chars": "呆呵叮喳哂噤嘌啉",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "哟叱吆喙咝吡呦喈",
+        "originalCount": 8,
+        "hint": "i"
+      },
+      {
+        "key": "e",
+        "chars": "别另咖嚼鹃嗳嗖咀",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "d",
+        "chars": "顺喊咕嘎呃咙吠嘁",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "c",
+        "chars": "吗吧叹邑唉嗓吮唆",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "r",
+        "chars": "听史啦啤啪呱嗥唏",
+        "originalCount": 8,
+        "hint": "F"
+      },
+      {
+        "key": "f",
+        "chars": "叶味吐喷鄙嘻喃嘲",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "v",
+        "chars": "啸叨唧呶哏咆啕唿",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "吃响呼川咱哦噢嗅",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "g",
+        "chars": "号吴吓呈吨吁哑喇",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "b",
+        "chars": "啊吸叩吼嗤咄嗫戢",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "咬哼嚷咳啼咏唷嘀",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "h",
+        "chars": "路足跟贵遣忠遗跑",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "n",
+        "chars": "叫呢哪嘱喔叼吣噼",
+        "originalCount": 8,
+        "hint": "T"
+      },
+      {
+        "key": "u",
+        "chars": "嗟嗍喑嗌噫吖咩噌",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "j",
+        "chars": "虽喝唱哩呻黾喁嘬",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "员嗣勋吊喘呐郧嘤",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "i",
+        "chars": "吵哨啵嗨咣唢哔吲",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "中口品器哭患骂吕",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "9",
+        "chars": "唼",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "嘛喽咪噗啖啜嗵哞",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "咽喂嗯嘿呷喟啭叻",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "喀喧哝嚓咛嘧咤啶",
+        "originalCount": 8,
+        "hint": "V"
+      }
+    ]
+  },
+  {
+    "key": "L",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "罗软蜀逻鸭囫镥",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "羁轼甙慝荛葚",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "癞羰羯瘗痘闩鄯羚",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "w",
+        "chars": "界输轮囚轸畛囹囵",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "s",
+        "chars": "困轲町罘畎罨轭轱",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "累辔毗篆牝筚秕鳘",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "男胃嬲骱髋骺",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "因恩固辏畴畸罟囿",
+        "originalCount": 8,
+        "hint": "s"
+      },
+      {
+        "key": "c",
+        "chars": "轻轰辍汊",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "暂斩堑轶錾畈椠辁",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "转团置黑围罢园默",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "v",
+        "chars": "轨辎囡轺轫",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "图略轿辂畋轹轷栝",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "g",
+        "chars": "车辅辆畏辐圃罡囤",
+        "originalCount": 8,
+        "hint": "y"
+      },
+      {
+        "key": "b",
+        "chars": "辄墼囝癃",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "较罚辙詈畀圄轾圊",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "四罪甲罩皿轳囗",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "思罹轧辗冱癍瘃痦",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "圈畔疃罾蔺蒺蒹蒴",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "辊沓瀑灏汩汨溻",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "轴辋湍汕澧氅泱",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "回圆辑轵軎劭迢娲",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "辘辚",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "国田圜",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "羝羧冽羟疠痍痖瘌",
+        "originalCount": 0,
+        "hint": "n"
+      },
+      {
+        "key": "p",
+        "chars": "连辖畹拧皖摈撺揎",
+        "originalCount": 3,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "M",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "见岁购赡峋峥峁岣",
+        "originalCount": 8,
+        "hint": "g"
+      },
+      {
+        "key": "a",
+        "chars": "贼曲典嵌岖嵘崂岽",
+        "originalCount": 8,
+        "hint": "u"
+      },
+      {
+        "key": "z",
+        "chars": "祚祁祗祯祺祉祜祧",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "w",
+        "chars": "内肉崔岭岑岚峪赊",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "s",
+        "chars": "崧岢崾",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "幽嶷鹪瓴隹侪劁",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "骨骸崩髓胄鹘骼髂",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "d",
+        "chars": "央岸岩崖炭贿赈鸯",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "c",
+        "chars": "峻贻峄岜鬈髹磉鬏",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "刚网冈贩嵬崤嵛嶝",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "周财赋雕贱赌赎岐",
+        "originalCount": 8,
+        "hint": "y"
+      },
+      {
+        "key": "v",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "败峰贬账赂巍峨峤",
+        "originalCount": 8,
+        "hint": "P"
+      },
+      {
+        "key": "g",
+        "chars": "峡屿赙豳崃赇岍刿",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "b",
+        "chars": "邮岌芨荪艿茁菡菰",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "丹嵩彤崞赅冉峙巅",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "由贝帐贴幅帕帽巾",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "n",
+        "chars": "岂凯崛嵋岷觊赆剀",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "u",
+        "chars": "赠赔赚罔嶂嵯嵫岈",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "则赐岿戆疸",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "同山册岗婴删鹦岫",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "i",
+        "chars": "峭嵴",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "迥贶铞",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "祛禳祢祓祆禊禚冖",
+        "originalCount": 0,
+        "hint": "l"
+      },
+      {
+        "key": "o",
+        "chars": "赃嶙嵝赕峒罂岘",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "崭崽岬崮宀礻辶",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "崇迪贮崆屺",
+        "originalCount": 4,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "@",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "浼洵淦漪汐潴泖",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "撕挠捞拣皂扛拭抠",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "z",
+        "chars": "钮饬饵馔锯饺饯馒",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "w",
+        "chars": "沧洽沦汾濮溆渝湓",
+        "originalCount": 0,
+        "hint": "C"
+      },
+      {
+        "key": "s",
+        "chars": "搽揲揠",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "旎",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "藏欺荐茂戎惹莽勘",
+        "originalCount": 0,
+        "hint": "$"
+      },
+      {
+        "key": "c",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "葩萆菝茱蔸",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "怯恃悖懦忖恸悻熨",
+        "originalCount": 0,
+        "hint": "G"
+      },
+      {
+        "key": "v",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "旗旋诱诞诈诰讫旌",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "g",
+        "chars": "桓酬酷柄酌枉梗酰",
+        "originalCount": 0,
+        "hint": "^"
+      },
+      {
+        "key": "b",
+        "chars": "羸邙肓嬴扃颏綮戽",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "y",
+        "chars": "炕煽廪炫炷煸熵灬",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "帖帆幢帷帜幌幔帧",
+        "originalCount": 0,
+        "hint": "&"
+      },
+      {
+        "key": "n",
+        "chars": "饶饿饱饲馈饼蚀饷",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "u",
+        "chars": "撇搓拌扪掸搠掊撙",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "j",
+        "chars": "埋堤坤塌戟斡亓埸",
+        "originalCount": 0,
+        "hint": "P"
+      },
+      {
+        "key": "m",
+        "chars": "躺躬筒躯笛徵秽稠",
+        "originalCount": 0,
+        "hint": "C"
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "襄敲衷亨谴膏孰谔",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "9",
+        "chars": "诲诜诿旒旃旄旖膂",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "薯匦茴鹋葸甍瞢蒽",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "烹吝塾鹑亳鹫瓤憝",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "T",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "物称移稳衡黎衔徇",
+        "originalCount": 8,
+        "hint": "C"
+      },
+      {
+        "key": "a",
+        "chars": "长升筑彻簧簪箕筐",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "z",
+        "chars": "囱囟箩篾衄箅",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "答徐符役签秃稚颓",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "s",
+        "chars": "条箱牺笨簟秫篥镦",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "第系每繁敏後胤毓",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "e",
+        "chars": "务船般航舰盘租艘",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "d",
+        "chars": "知敌乱适智短辞籍",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "c",
+        "chars": "么私径笃笆笞犍簋",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "御穆秩循稀鹅箍徼",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "f",
+        "chars": "等先特德告千造选",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "v",
+        "chars": "很委律魏箫笋逶笤",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "t",
+        "chars": "和笑笔牧牲筵篷禾",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "g",
+        "chars": "生行重征策牛衙惩",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "b",
+        "chars": "秀季透迤笈馥笪稞",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "入往篇稿簇篱籴犒",
+        "originalCount": 8,
+        "hint": "C"
+      },
+      {
+        "key": "h",
+        "chars": "自处怎算息片延版",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "n",
+        "chars": "乐秘乞迄笥筷唰",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "科乎简税乘冬箭剩",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "j",
+        "chars": "得利复香篮梨犁筛",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "m",
+        "chars": "身向微射奥币躲徽",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "i",
+        "chars": "稍秒簿衍愆箔徜筲",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "种各程积禹雒篑稆",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "秋释翻悉番愁釉鄱",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "l",
+        "chars": "备血稷衅徊粤惫睾",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "管乏稼箜箢篓簏簖",
+        "originalCount": 5,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "R",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "换鬼抱抵挑欣抑拘",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "a",
+        "chars": "找措拒描摸撒搭拱",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "z",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "失推投抢拾携擒扮",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "s",
+        "chars": "打杀刹弑揸沭漤",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "指批拂拇拗掾揩掼",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "e",
+        "chars": "授摇拥援搜捋刈抻",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "希拜振拔掩扰拢捧",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "c",
+        "chars": "把反择抬返瓜挨摊",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "r",
+        "chars": "的白折抓哲拍誓拆",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "f",
+        "chars": "持质技抚挂扶盾遁",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "v",
+        "chars": "势热执招扫殷抛垫",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "t",
+        "chars": "手托括播挺插拖斤",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "g",
+        "chars": "后兵皇捕岳丘捷抹",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "b",
+        "chars": "报凶摄扔拙拯揶搦",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "护抗搞撤掠邀挤斥",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "h",
+        "chars": "年看排掉爬扑披扯",
+        "originalCount": 8,
+        "hint": "0"
+      },
+      {
+        "key": "n",
+        "chars": "所气据扬握扎拟撰",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "u",
+        "chars": "接拉撞抖拦拼搁掷",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "j",
+        "chars": "提担揭捏揽捍拽撮",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "m",
+        "chars": "制缺抽帛摧罐缸揣",
+        "originalCount": 8,
+        "hint": "V"
+      },
+      {
+        "key": "i",
+        "chars": "朱泉抄挡撑搅捎邾",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "损操捉扣捐拐揖挹",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "扩搂擞搪掂摭捌",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "舞摆押捆撂摞擐摁",
+        "originalCount": 8,
+        "hint": "P"
+      },
+      {
+        "key": "0",
+        "chars": "爪卸拈掳攫摅谂颃",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "近按挥控探迫擦挖",
+        "originalCount": 8,
+        "hint": "L"
+      }
+    ]
+  },
+  {
+    "key": "E",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "胸胞脆豹朐胝肷舄",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "毁腊膜朦腻肛胨舁",
+        "originalCount": 8,
+        "hint": "C"
+      },
+      {
+        "key": "z",
+        "chars": "踟噱踯踬蹼呲躐躞",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "w",
+        "chars": "办脸股肌臾胗脍貅",
+        "originalCount": 8,
+        "hint": "m"
+      },
+      {
+        "key": "s",
+        "chars": "采彩腰膝膘肜舀脬",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "脂奚胰豚肫雎膈腈",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "有月朋胁鹏肋勰腴",
+        "originalCount": 8,
+        "hint": "s"
+      },
+      {
+        "key": "d",
+        "chars": "须胧胚肱肽腌腼胯",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "c",
+        "chars": "肥胎胫腚膑脘腙膣",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "貌遥脾腺繇邈鹞胍",
+        "originalCount": 8,
+        "hint": "0"
+      },
+      {
+        "key": "f",
+        "chars": "脚肚肝肤脖肢膨肘",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "v",
+        "chars": "腿妥貂腱蹯蹁躜踺",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "胜腹胀胳臼胙貉貔",
+        "originalCount": 8,
+        "hint": "j"
+      },
+      {
+        "key": "g",
+        "chars": "且县助悬肺膊脯爰",
+        "originalCount": 8,
+        "hint": "x"
+      },
+      {
+        "key": "b",
+        "chars": "服乳孚郛臃膻胲膪",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "脑脉膀胶肮肪腋脐",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "h",
+        "chars": "用叟胪腓胩哿腭脶",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "力鼠肠甩鼹脲鼬鼷",
+        "originalCount": 8,
+        "hint": "G"
+      },
+      {
+        "key": "u",
+        "chars": "脱腾朕胖膳滕臆媵",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "j",
+        "chars": "胆腥刖胂腽彡豸",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "觅腆爨肭璺胴脞腧",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "膛盥胱菠蒗蒎茳",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "加架驾贺肿迦袈臊",
+        "originalCount": 8,
+        "hint": "h"
+      },
+      {
+        "key": "9",
+        "chars": "虢豺朊肼肟腩臌",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "脏腑臁脒膦胼塍",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "爵舅舆腮胛胭貊腠",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "脎",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "受边爱腔舜腕胺脓",
+        "originalCount": 8,
+        "hint": "c"
+      }
+    ]
+  },
+  {
+    "key": "W",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "你像低您仰侈儋偬",
+        "originalCount": 8,
+        "hint": "m"
+      },
+      {
+        "key": "a",
+        "chars": "代供借伐袋贷黛偃",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "z",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "人从众坐价欲谷份",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "s",
+        "chars": "何体休朵剁鸺仃僳",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "x",
+        "chars": "化华佛货倾仑偕仳",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "俘倪佣伽仂伲倔倨",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "做段优伏估仗佐俺",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "c",
+        "chars": "公仅凤俊翁颂俟傩",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "r",
+        "chars": "风父爷伯爸爹凰斧",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "f",
+        "chars": "会什传值侍付仁舍",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "v",
+        "chars": "分伊健侵贫仇盆颁",
+        "originalCount": 8,
+        "hint": "F"
+      },
+      {
+        "key": "t",
+        "chars": "作任几件八伤俄凭",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "g",
+        "chars": "使全合便命余倒拿",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "b",
+        "chars": "他仍创仔仓戗佴傈",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "信今令住领集念食",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "h",
+        "chars": "个候企修俱仆侦悠",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "n",
+        "chars": "似假追侯亿伺僻阜",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "u",
+        "chars": "们位僧伴倍伞倦僮",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "j",
+        "chars": "但介伸偶倡俚偈倮",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "仙侧催侗倜俜佻佝",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "偿倘俏傥氽",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "保促仲堡侣侃煲俣",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "伙俯偻攸倏倬俳佧",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "佃偎儡儇瓮侔俑殳",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "侬倌伫佗傧倥佯",
+        "originalCount": 6,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "Q",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "我多金钦钩铭钓钧",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "a",
+        "chars": "氏错昏邸氐桀钜钳",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "z",
+        "chars": "锛钹铖钴镢钸铕",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "欠铃锻铅锥铨钤镌",
+        "originalCount": 8,
+        "hint": "V"
+      },
+      {
+        "key": "s",
+        "chars": "钉镖钵镡钶楂棼",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "锴镄镪雏钕锓锱铷",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "解角触钥斛蟹觯觥",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "d",
+        "chars": "然危铸詹钚镣钛锲",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "c",
+        "chars": "色勾钗铎钯铒",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "忽铁锦勿匆匈铩铢",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "f",
+        "chars": "钱镇针钍铐镭锗铑",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "争急银键皱煞邹刍",
+        "originalCount": 8,
+        "hint": "x"
+      },
+      {
+        "key": "t",
+        "chars": "儿独犯卿犹猛狂狱",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "g",
+        "chars": "印鲁鱼鲜铺鲍稣鳎",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "b",
+        "chars": "迎怨鸳钌锰锕镊眢",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "y",
+        "chars": "留久岛鸟贸卵镑镶",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "h",
+        "chars": "外钻钋钼铍幛帱冂",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "包饭馆乌饮饰馀饥",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "u",
+        "chars": "镜锐匀铲锵锌锏镒",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "j",
+        "chars": "锡龟旬钊铿锟锝锞",
+        "originalCount": 8,
+        "hint": "B"
+      },
+      {
+        "key": "m",
+        "chars": "负铜钢铀钡奂铡钠",
+        "originalCount": 8,
+        "hint": "0"
+      },
+      {
+        "key": "i",
+        "chars": "尔逃销锁兆钞玺迩",
+        "originalCount": 8,
+        "hint": "U"
+      },
+      {
+        "key": "k",
+        "chars": "名象够免句钟勉逸",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "9",
+        "chars": "刎锨钣铂",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "炙镂镀镰镳镛锬钬",
+        "originalCount": 8,
+        "hint": "S"
+      },
+      {
+        "key": "l",
+        "chars": "链甸锣锢钿镯钾锶",
+        "originalCount": 8,
+        "hint": "J"
+      },
+      {
+        "key": "0",
+        "chars": "铠",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "锭夤铵镔镓铊镩镲",
+        "originalCount": 8,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "#",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "誊闫鲞疬桊",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "搿拎拊掰揄",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "瓣辫瘛阉闼闳疣痞",
+        "originalCount": 0,
+        "hint": "q"
+      },
+      {
+        "key": "w",
+        "chars": "挫迭扒捡拴抡捻揆",
+        "originalCount": 0,
+        "hint": "a"
+      },
+      {
+        "key": "s",
+        "chars": "猥锹锸钅獾狰獬铄",
+        "originalCount": 0,
+        "hint": ")"
+      },
+      {
+        "key": "x",
+        "chars": "猗铣狞锈獗狎逖狙",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "e",
+        "chars": "艇舟舱筋舶稻舷磐",
+        "originalCount": 0,
+        "hint": "$"
+      },
+      {
+        "key": "d",
+        "chars": "辩券辨拳凑眷辣豢",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "c",
+        "chars": "飑",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "俾佚釜傀侏飕飓飚",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "f",
+        "chars": "桂杆棱栈甄桔剽瓢",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "v",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "狗锋夕卯狄猎猜狼",
+        "originalCount": 0,
+        "hint": "^"
+      },
+      {
+        "key": "g",
+        "chars": "蕙菁廿茉荚匚莆芾",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "b",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "滚滴淳汴泳沪浏濠",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "h",
+        "chars": "赶趣赴趋盐坡趁颠",
+        "originalCount": 0,
+        "hint": ")"
+      },
+      {
+        "key": "n",
+        "chars": "鹬鍪蟊鹜骛瞀蝥厶",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "串咒鄂噪嚣鹗鼍颚",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "瀛澈淤汶漓滦浒澶",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "o",
+        "chars": "谜奕挛銮峦栾燮弈",
+        "originalCount": 0,
+        "hint": "A"
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "滂漩沆鎏淬泫沩氵",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "萱茔苎菪菅茕蔻荦",
+        "originalCount": 0,
+        "hint": "H"
+      }
+    ]
+  },
+  {
+    "key": "Y",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "询诡谗谄诤诋诳诌",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "a",
+        "chars": "试谋诺谨讶谎诬谟",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "z",
+        "chars": "馋饨馄馊饫饩饽饪",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "w",
+        "chars": "论认六交设夜谁效",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "s",
+        "chars": "订谭诃",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "率玄诣雍畜谐紊壅",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "e",
+        "chars": "衣谣裔谀谖诅裒谵",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "诚斋诙诔诂佰侉",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "c",
+        "chars": "育充弃译诵诒袤诶",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "r",
+        "chars": "义离诉诛亵诟旆饔",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "计诸讲诗讨读斌讳",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "v",
+        "chars": "郎良诏朗诘诖讦谳",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "话州许放施族谢旅",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "g",
+        "chars": "请证语评谏诼寅冢",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "b",
+        "chars": "诹诎邡",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "主方文言议该访谅",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "h",
+        "chars": "让谑卞诽讣苜茈",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "望记房刻户永亡词",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "u",
+        "chars": "说帝商旁详谦谥谱",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "j",
+        "chars": "刘齐课剂谒裹谩齑",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "市调讷讪钆铌铋饣",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "诮谠",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "就高识京亮误毫训",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "9",
+        "chars": "谘谙斓谚啻谰谫",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "变亦谈迹恋蛮弯鸾",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "l",
+        "chars": "谓禀颤亩谡痼冁瘰",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "饧邬馓锔钇镅馇馏",
+        "originalCount": 0,
+        "hint": "m"
+      },
+      {
+        "key": "p",
+        "chars": "谊诧诨",
+        "originalCount": 3,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "U",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "将次资盗净奖姿阎",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "a",
+        "chars": "并瓶冻迸瘩疟阈痨",
+        "originalCount": 8,
+        "hint": "0"
+      },
+      {
+        "key": "z",
+        "chars": "羡闰阑羲恙羹竦羔",
+        "originalCount": 0,
+        "hint": "L"
+      },
+      {
+        "key": "w",
+        "chars": "准益冷闪疯疫阀疮",
+        "originalCount": 8,
+        "hint": ")"
+      },
+      {
+        "key": "s",
+        "chars": "新亲尊闲遵奠酋凇",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "x",
+        "chars": "北弟背慈递凝兹冀",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "e",
+        "chars": "前遂毅瘦剪煎疽翦",
+        "originalCount": 8,
+        "hint": "B"
+      },
+      {
+        "key": "d",
+        "chars": "头关送卷状兰减郑",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "c",
+        "chars": "痛冯闯冶瘫疤竣痉",
+        "originalCount": 8,
+        "hint": "h"
+      },
+      {
+        "key": "r",
+        "chars": "闺癫阖闱痔阗痣",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "装斗养辛闭壮凌羌",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "v",
+        "chars": "兼妾痕妆歉鹣瘿疝",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "道首疾阁颜彦疼痴",
+        "originalCount": 8,
+        "hint": "("
+      },
+      {
+        "key": "g",
+        "chars": "着美病半善差判盖",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "b",
+        "chars": "闻疗朔逆塑瘾槊疖",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "y",
+        "chars": "门闹凉闵凛阂阆阏",
+        "originalCount": 8,
+        "hint": "^"
+      },
+      {
+        "key": "h",
+        "chars": "站疲丫疵阒癯痱瘙",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "决闷翊癖疡癜瘳阚",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "u",
+        "chars": "产立阅阙阐痒瘴痫",
+        "originalCount": 8,
+        "hint": "G"
+      },
+      {
+        "key": "j",
+        "chars": "意间章音竟童竭韵",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "m",
+        "chars": "端弊敝瞥憋凋鳖蹩",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "i",
+        "chars": "冰阔瘠痧鼗铛镗铴",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "部问总况冲竞癌剖",
+        "originalCount": 8,
+        "hint": "H"
+      },
+      {
+        "key": "9",
+        "chars": "羊症叛羞靖翔姜凄",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "o",
+        "chars": "普痰瘘剃鹚孳鹈邶",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "单曾兽闸痹郸阃甑",
+        "originalCount": 8,
+        "hint": "Y"
+      },
+      {
+        "key": "0",
+        "chars": "瘼疳癀",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "瘕",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "I",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "沟渔溜泡淘澹涣洮",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "a",
+        "chars": "江满港洪汇鸿泄漠",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "z",
+        "chars": "澳沃潘渊劣涤涎湫",
+        "originalCount": 0,
+        "hint": "H"
+      },
+      {
+        "key": "w",
+        "chars": "没沿淮涂浴雀澄脊",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "s",
+        "chars": "河酒漂湘洒漆淋潭",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "x",
+        "chars": "涨沸溺泓潍浯浃濑",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "浮溪削淫肖滔沮逍",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "d",
+        "chars": "源湖尖涛淹涯汰沽",
+        "originalCount": 8,
+        "hint": "Z"
+      },
+      {
+        "key": "c",
+        "chars": "治汉泽涌滩浚渗泾",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "r",
+        "chars": "派激汽浙泊汹沂湟",
+        "originalCount": 8,
+        "hint": "C"
+      },
+      {
+        "key": "f",
+        "chars": "法潜潮汗污尘洁浅",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "v",
+        "chars": "当梁染汝津浸沼涩",
+        "originalCount": 8,
+        "hint": "G"
+      },
+      {
+        "key": "t",
+        "chars": "海少活省洛洗泛浩",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "g",
+        "chars": "光清兴举辉誉添耀",
+        "originalCount": 8,
+        "hint": "0"
+      },
+      {
+        "key": "b",
+        "chars": "池涵汲滁凼洱滠泐",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "流济注游洲湾浪液",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "h",
+        "chars": "小波婆泪涉沾淑渺",
+        "originalCount": 8,
+        "hint": "*"
+      },
+      {
+        "key": "n",
+        "chars": "汤泥漏泼泌沁渥烫",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "u",
+        "chars": "洋润泣滋溢涕澜溯",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "j",
+        "chars": "温混漫湿渴滥涅浊",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "m",
+        "chars": "尚测洞油滑敞溅涔",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "i",
+        "chars": "不水消沙淌娑裟鲨",
+        "originalCount": 8,
+        "hint": "N"
+      },
+      {
+        "key": "k",
+        "chars": "溃潞涡澡涓浞渑漶",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "溥涿漱涞沌渍沔涑",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "o",
+        "chars": "渡淡漉濂溏瀵淝溲",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "渐渭泗涸涟淠涠洄",
+        "originalCount": 8,
+        "hint": "F"
+      },
+      {
+        "key": "0",
+        "chars": "汪浦滞沛沫漕洌洹",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "p",
+        "chars": "学常觉深党堂沉演",
+        "originalCount": 8,
+        "hint": ")"
+      }
+    ]
+  },
+  {
+    "key": "O",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "底炮燃焰焕灼炊熘",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "a",
+        "chars": "度席烧庶炼煤遮粪",
+        "originalCount": 8,
+        "hint": "x"
+      },
+      {
+        "key": "z",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "府座粉腐鹰膺焓烨",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "s",
+        "chars": "床灯麻魔摩磨靡麽",
+        "originalCount": 8,
+        "hint": "m"
+      },
+      {
+        "key": "x",
+        "chars": "庇庀糨烘炬鹧庹廑",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "粗庾爝庥糇炝煅烩",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "类庆烦糊庞庵燎煳",
+        "originalCount": 8,
+        "hint": "j"
+      },
+      {
+        "key": "c",
+        "chars": "序糁粑烃糅烊焖糍",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "煌粕烯庳庖粼廨遴",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "庄灶烤庑炜糯庋攉",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "数唐康庚庸娄赓煺",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "庭炸烁熄烙糙烽燔",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "g",
+        "chars": "业精糟凿炳邺炖黼",
+        "originalCount": 8,
+        "hint": "h"
+      },
+      {
+        "key": "b",
+        "chars": "籽鬯邝敉烀糗燠糌",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "广米粮粹炉廊庐廓",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "h",
+        "chars": "店粘焯焐黻粳黹廒",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "断废鹿麟廖炀麝烬",
+        "originalCount": 8,
+        "hint": "%"
+      },
+      {
+        "key": "u",
+        "chars": "料廉粒烂糕焙庠燧",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "j",
+        "chars": "爆烛煜熳焊廛粝炻",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "庙灿炯籼麾糜縻粞",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "应炒",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "燥炽",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "为火炎糖糠焱郯剡",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "烟库煨",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "迷熔煊粽烷",
+        "originalCount": 5,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "P",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "冤宛鸩剜骞謇搴褰",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "塞宽寒赛寨宦寞蹇",
+        "originalCount": 8,
+        "hint": "q"
+      },
+      {
+        "key": "z",
+        "chars": "祝祸祀禅祠禧祈祷",
+        "originalCount": 0,
+        "hint": "M"
+      },
+      {
+        "key": "w",
+        "chars": "空容究察突穿窗穷",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "s",
+        "chars": "宋宁",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "它窭窳窬穸窆窨窀",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "农宜藐菔蒯莩苴萸",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "害寄割寡宏宠豁宸",
+        "originalCount": 8,
+        "hint": "f"
+      },
+      {
+        "key": "c",
+        "chars": "窒冗穹邃窠窈窕窿",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "r",
+        "chars": "宾鲒鳆铼鲼鳓鳋鲺",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "完宗守冠寇宥宕寮",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "安案宄",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "客额宪宅牢屹嵊",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "g",
+        "chars": "家定写宝宣室富宇",
+        "originalCount": 8,
+        "hint": "Y"
+      },
+      {
+        "key": "b",
+        "chars": "字",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "神社视礼祖福禄祥",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "h",
+        "chars": "官寂逭趄趔垆坫趑",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "密蜜寥寐寤宓甯廴",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "实被初补宰袖裕寝",
+        "originalCount": 8,
+        "hint": "$"
+      },
+      {
+        "key": "j",
+        "chars": "审宴寓冥幂墁埘",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "宙鹂邴璎",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "宵",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "宫",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "宿窃穴罕窝鹤帘窦",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "o",
+        "chars": "灾",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "军郓寰皲掴",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "窜窄窥窍窑窟窘窖",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "p",
+        "chars": "这之",
+        "originalCount": 2,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "$",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "咨瘤瓷浆痪恣酱桨",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "a",
+        "chars": "渠灌湛浇潇淇涝潢",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "z",
+        "chars": "俎怂鹆僬佾傺侩伧",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "w",
+        "chars": "伦俗偷佩丛耸俭伶",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "s",
+        "chars": "疚粢阄阍癣疱",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "鲟鲔鲢鲵鲶鳕鲰鳟",
+        "originalCount": 0,
+        "hint": "m"
+      },
+      {
+        "key": "e",
+        "chars": "笾舵舫徭笳舨艄舸",
+        "originalCount": 0,
+        "hint": "!"
+      },
+      {
+        "key": "d",
+        "chars": "藉斟葫藕苤葜茏茬",
+        "originalCount": 0,
+        "hint": "*"
+      },
+      {
+        "key": "c",
+        "chars": "鞲颧莴蒉蕺",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "鲦鲽鲳鲩鳐鲴鲕鲣",
+        "originalCount": 0,
+        "hint": "P"
+      },
+      {
+        "key": "f",
+        "chars": "砖奎奢磕匏硅蜃瓠",
+        "originalCount": 0,
+        "hint": "H"
+      },
+      {
+        "key": "v",
+        "chars": "韪螬",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "栎梏楸柞桁枨梃棰",
+        "originalCount": 0,
+        "hint": "L"
+      },
+      {
+        "key": "g",
+        "chars": "晤昊蛭蝠蟪晡蜻蛱",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "b",
+        "chars": "仉",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "蔼弋蒿菸藁蓑鸢苄",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "h",
+        "chars": "跳嘴距跃唬踪跌践",
+        "originalCount": 0,
+        "hint": "("
+      },
+      {
+        "key": "n",
+        "chars": "拨扭氧氛擢掘挪氢",
+        "originalCount": 0,
+        "hint": ")"
+      },
+      {
+        "key": "u",
+        "chars": "袍衫裤裙裸褐衬褚",
+        "originalCount": 0,
+        "hint": "^"
+      },
+      {
+        "key": "j",
+        "chars": "茺",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "鲭鲮鳊鲱鲡鲥鳔鳢",
+        "originalCount": 0,
+        "hint": "p"
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "觐萼莒鞑叵鞯靼靳",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "9",
+        "chars": "鞴葺鹳鞣鞒堇鞔鄞",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "莨蕹荠蔟茭葶蒡蓠",
+        "originalCount": 0,
+        "hint": "j"
+      },
+      {
+        "key": "p",
+        "chars": "鲐铗鳜鳙鲚鳇鲷鲻",
+        "originalCount": 0,
+        "hint": "r"
+      }
+    ]
+  },
+  {
+    "key": "N",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "懈惚恂愍懵惬羿怄",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "展异殿惜懂慌臀屉",
+        "originalCount": 8,
+        "hint": "q"
+      },
+      {
+        "key": "z",
+        "chars": "愎愀屐屦怍屣",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "惟恰怜愉戮翟戳憔",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "s",
+        "chars": "怵憷昼悴咫懔忭忄",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "尼惯屁怫刁悚愫怦",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "居怀剧忧恢怖憾惰",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "c",
+        "chars": "怪惨怡怿悛怆鹨忪",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "怕愧惶忻忾箨筢篼",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "导层尉迅慰愤慎屠",
+        "originalCount": 8,
+        "hint": "@"
+      },
+      {
+        "key": "v",
+        "chars": "恨慨尻忉怊悭",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "性必改属尾履悔恤",
+        "originalCount": 8,
+        "hint": "9"
+      },
+      {
+        "key": "g",
+        "chars": "那情司屋悟恒懒怔",
+        "originalCount": 8,
+        "hint": "x"
+      },
+      {
+        "key": "b",
+        "chars": "敢屈慑憨孱屙怙恹",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "心尽惊忙尺迟翠恼",
+        "originalCount": 8,
+        "hint": "s"
+      },
+      {
+        "key": "h",
+        "chars": "收疏丑惧眉蛋悼胥",
+        "originalCount": 8,
+        "hint": "V"
+      },
+      {
+        "key": "n",
+        "chars": "民已己书快局乙尸",
+        "originalCount": 8,
+        "hint": "&"
+      },
+      {
+        "key": "u",
+        "chars": "飞习买悦屏憎惮悯",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "j",
+        "chars": "慢惺惕悍憬愠怛悝",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "m",
+        "chars": "届刷恺恻怏惴惆惘",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "i",
+        "chars": "悄尿恍屑犀惝淼挲",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "避壁臂辟劈譬愕璧",
+        "originalCount": 8,
+        "hint": "!"
+      },
+      {
+        "key": "9",
+        "chars": "恪懊怅忏忤恬悸虱",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "o",
+        "chars": "屡慷屎惦慵恫",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "翼愣惭悃",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "忱惋恽翌憧悌慊羼",
+        "originalCount": 3,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "B",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "隐陷陶聊孢",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "陈硗硭砑砹礴礞礤",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "队除险阶附坠聆戤",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "s",
+        "chars": "阿耵",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "陛",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "阴阻瘸阋痈阌痂瘐",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "随承隋陌陇堕隳睚",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "c",
+        "chars": "取聚盈娶聂陉鄹颞",
+        "originalCount": 8,
+        "hint": "w"
+      },
+      {
+        "key": "r",
+        "chars": "孤隍阪隗陴醌酞酏",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "际陵陡阮孺阱",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "限褓襦褊裥褙襻衤",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "降隆孜阼陲阡聒痄",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "g",
+        "chars": "卫陆耳隔陕陋阢",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "b",
+        "chars": "了子耶孕陬蠃",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "及防孩陔孓敫掮捩",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "耻陟陂蚩鼐骘阽屮",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "也乃孔孑卩阝凵兕",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "联障陪聪隘隧搛揞",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "阳隅隰陧锂郇钽镘",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "出聘祟粜聃蚰蚺蜩",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "孙丞逊函隙卺尕",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "职亟陨聩埚埕",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "耿",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "阵孟勐隈",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "院辽陀耽聍",
+        "originalCount": 5,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "V",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "婚姚鸠娩妁婷嬗姣",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "媒姬妪媾娆嫫妩嫱",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "妗飧锉镫钒镎铧铪",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "s",
+        "chars": "杂嫖暨帑孥妤驽胬",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "姆妣",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "姐退嫂恳垦媛艮嫒",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "姑娠塬顸埯坜颥",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "c",
+        "chars": "即始既妈怒奴努弩",
+        "originalCount": 8,
+        "hint": "s"
+      },
+      {
+        "key": "r",
+        "chars": "婢姝檄皙槔栀柝",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "寻妹奸娃妓姥嬉孀",
+        "originalCount": 8,
+        "hint": "a"
+      },
+      {
+        "key": "v",
+        "chars": "发女妇姊媳娥妊媲",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "九君群姓郡妖尹娇",
+        "originalCount": 8,
+        "hint": "v"
+      },
+      {
+        "key": "g",
+        "chars": "建姨嫩嫣娅聿婕妍",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "b",
+        "chars": "好她奶媸婀姒巛彐",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "娘忍妨丸刃妒嫡妫",
+        "originalCount": 8,
+        "hint": "q"
+      },
+      {
+        "key": "h",
+        "chars": "肀遐奘戕鹛悱疋爿",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "刀妃娜媚婿妮妞娓",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "u",
+        "chars": "嫌嫉娴婵馗娣姘嫜",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "巢剿旭娼媪妲娌旮",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "娉姗妯掣缶罅皑撄",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "录妙肃隶剥逮嫦逯",
+        "originalCount": 8,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "如召恕邵娟娱絮邕",
+        "originalCount": 8,
+        "hint": "L"
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "灵嬷",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "姻嫘邋甾婊婧",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "巡嫁婉婶嫔帚姹噻",
+        "originalCount": 7,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "C",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "欢允鸡笏筝笱黧",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "戏劲颈迳弁巯刭貘",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "骄驳骤骚骇驴驿骆",
+        "originalCount": 0,
+        "hint": "D"
+      },
+      {
+        "key": "w",
+        "chars": "难逡皴泠滏浍潋瀹",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "s",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "能通勇劝熊恿甬",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "参叁畚毵蓁茇蒇蕻",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "c",
+        "chars": "以又双桑叠垒颡蛏",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "湃淆浜浠洙",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "对圣怼纣纭鸨缜缬",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "v",
+        "chars": "艰",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "矣牟鹎郫皤扦擤挢",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "g",
+        "chars": "马验骑驻驱骗驶驰",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "b",
+        "chars": "邓",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "叉蚤彷穰篙汆稂犏",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "跋蹄踩蹦趾蹋踉趴",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "n",
+        "chars": "巴预予柔豫矛矜婺",
+        "originalCount": 8,
+        "hint": "#"
+      },
+      {
+        "key": "u",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "观秧笕",
+        "originalCount": 1,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "台怠迨炱邰豉豇",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "跻跸蹑蹬啃跤踞跛",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "踱嘘踌躇跄踵跷踊",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "X",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "约绝纸弥绚绉缑缏",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "红练绕绒缂绀绁缡",
+        "originalCount": 7,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "颖绛飨匕纥绦绺缵",
+        "originalCount": 0,
+        "hint": "i"
+      },
+      {
+        "key": "w",
+        "chars": "给维纵纷绘缎纶缒",
+        "originalCount": 8,
+        "hint": "q"
+      },
+      {
+        "key": "s",
+        "chars": "缥缃",
+        "originalCount": 2,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "经比皆毕丝缘毙畿",
+        "originalCount": 8,
+        "hint": "r"
+      },
+      {
+        "key": "e",
+        "chars": "组缓幼绥绶绷纟",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "顷毋弼缄绑缅绮缭",
+        "originalCount": 8,
+        "hint": "p"
+      },
+      {
+        "key": "c",
+        "chars": "弘纾缀绎绐弪绨",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "缴绵弧毖幺鸶纰绋",
+        "originalCount": 3,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "结线续贯绪疆纬绫",
+        "originalCount": 8,
+        "hint": "C"
+      },
+      {
+        "key": "v",
+        "chars": "绿绍纨纫缫缁苕茛",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "张终疑乡络绣缝纤",
+        "originalCount": 8,
+        "hint": "z"
+      },
+      {
+        "key": "g",
+        "chars": "纯绩缚彝缙蠡缰纡",
+        "originalCount": 8,
+        "hint": "b"
+      },
+      {
+        "key": "b",
+        "chars": "级弛弭绌彘彖绠",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "统编弦纹纺绞缔缟",
+        "originalCount": 8,
+        "hint": "a"
+      },
+      {
+        "key": "h",
+        "chars": "引绰绯缈颦眦氍丨",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "母纪幻纠弓纽缪缗",
+        "originalCount": 8,
+        "hint": "e"
+      },
+      {
+        "key": "u",
+        "chars": "弹弱缮绊缢缯绻缣",
+        "originalCount": 8,
+        "hint": "c"
+      },
+      {
+        "key": "j",
+        "chars": "费旨弗绅缆缇缦绲",
+        "originalCount": 8,
+        "hint": "o"
+      },
+      {
+        "key": "m",
+        "chars": "纳纲绸缨苒觏茼苘",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "纱颍绱绡糸肄缍绗",
+        "originalCount": 5,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "强织绳绢缉缱缋犟",
+        "originalCount": 8,
+        "hint": "l"
+      },
+      {
+        "key": "9",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "继缠缕粥鬻纩艴",
+        "originalCount": 6,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "细缌缧缳缲",
+        "originalCount": 4,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "缩综绽绾缤缛绂绔",
+        "originalCount": 5,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "%",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "萄葱荀蓟擎芍苞茗",
+        "originalCount": 0,
+        "hint": "*"
+      },
+      {
+        "key": "a",
+        "chars": "谍诫谌谮诓讵讴讧",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "z",
+        "chars": "曛蜓蚱蟋蝌虼蚝蝮",
+        "originalCount": 0,
+        "hint": "r"
+      },
+      {
+        "key": "w",
+        "chars": "栓枫橙槌桦枞檎椴",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "s",
+        "chars": "汀沐湮渣淞淅溧潸",
+        "originalCount": 0,
+        "hint": "R"
+      },
+      {
+        "key": "x",
+        "chars": "伪邻焦储贪禽傍衾",
+        "originalCount": 0,
+        "hint": ")"
+      },
+      {
+        "key": "e",
+        "chars": "逅遑攮掭扌",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "乔逢筹笼稽舌矩甜",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "c",
+        "chars": "榫麴柃",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "蜊戥",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "哇嗜嘟吱嗔哮嗦咭",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "v",
+        "chars": "衽褴衩褛袼襁裣裉",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "t",
+        "chars": "晦螅蟠蛾蜘晷蛞蜒",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "g",
+        "chars": "搏邱挟乓捂乒抨卮",
+        "originalCount": 0,
+        "hint": "e"
+      },
+      {
+        "key": "b",
+        "chars": "舐嵇憩榘鸹犄矧牯",
+        "originalCount": 0,
+        "hint": "S"
+      },
+      {
+        "key": "y",
+        "chars": "依停凡仪含偏售仿",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "h",
+        "chars": "彼牌竹鼻徙臭咎乍",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "n",
+        "chars": "麒麋炔熠麈鏖麂麇",
+        "originalCount": 0,
+        "hint": "j"
+      },
+      {
+        "key": "u",
+        "chars": "衲裾裼袷褫褡裢裱",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "j",
+        "chars": "糈",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "嚯",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "融赖逼敕豆囊逗剌",
+        "originalCount": 0,
+        "hint": "("
+      },
+      {
+        "key": "9",
+        "chars": "哧嗑噎嚏呒嚅嘭呋",
+        "originalCount": 0,
+        "hint": "m"
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "矢矮刮矫夭雉舔箴",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "^",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "殉殡赘殃殁殓殄殒",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "a",
+        "chars": "簸筮笸箧乇篝篚筇",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "z",
+        "chars": "虺虿殇玖趸鏊殚餮",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "w",
+        "chars": "龈龊睽龌龆睑龉龅",
+        "originalCount": 0,
+        "hint": "e"
+      },
+      {
+        "key": "s",
+        "chars": "麸獒聱珧",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "猾狻锺猝猖獭獠狒",
+        "originalCount": 0,
+        "hint": "#"
+      },
+      {
+        "key": "e",
+        "chars": "龇龃龀",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "槭橛榛梆楔柘栊枥",
+        "originalCount": 0,
+        "hint": "m"
+      },
+      {
+        "key": "c",
+        "chars": "逄箬",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "逝魄掀扳爻皈踅蜇",
+        "originalCount": 0,
+        "hint": "j"
+      },
+      {
+        "key": "f",
+        "chars": "伟祭舒佳儒仕僖伎",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "v",
+        "chars": "醺醢醪酚醵酮醭酗",
+        "originalCount": 0,
+        "hint": "!"
+      },
+      {
+        "key": "t",
+        "chars": "狠猪猫狐狭猿猩猴",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "g",
+        "chars": "朽醇酥酿醋梧酣酝",
+        "originalCount": 0,
+        "hint": "i"
+      },
+      {
+        "key": "b",
+        "chars": "狮狡狸锤逛猓狈狩",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "y",
+        "chars": "闶瘁瘀疰痃冫丬疒",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "鸦颐赜芷菽苫蘧迓",
+        "originalCount": 0,
+        "hint": "Y"
+      },
+      {
+        "key": "n",
+        "chars": "亏霞馨韬韧霹罄磬",
+        "originalCount": 0,
+        "hint": "*"
+      },
+      {
+        "key": "u",
+        "chars": "襟袄褂袜褥褪裨袱",
+        "originalCount": 0,
+        "hint": ")"
+      },
+      {
+        "key": "j",
+        "chars": "捭搋",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "楱",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "槽酢酶醴酵酪醮醯",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "k",
+        "chars": "锅兔铝钏锷劬鸲锃",
+        "originalCount": 0,
+        "hint": "M"
+      },
+      {
+        "key": "9",
+        "chars": "佞佬偾刽畲佘佶郐",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "殂劢遨殛殪骜殍螯",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "&",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "迈兀歼殆熬敖鳌歹",
+        "originalCount": 0,
+        "hint": "^"
+      },
+      {
+        "key": "a",
+        "chars": "僭侥岱儆偌伢垡仝",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "z",
+        "chars": "蘅蘩芊荞莠荇莪蓰",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "w",
+        "chars": "卒谕诊郊於讼讽讥",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "s",
+        "chars": "柯栖栗彬麓婪梵郴",
+        "originalCount": 0,
+        "hint": "Q"
+      },
+      {
+        "key": "x",
+        "chars": "鱿鲑鲛鲧鲅钲鳝鲲",
+        "originalCount": 0,
+        "hint": "$"
+      },
+      {
+        "key": "e",
+        "chars": "沅濡灞澍溘",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "皋拓扼肴撼撩翱挞",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "c",
+        "chars": "伛牮",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "颀郄",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "汁渎渤渚洼滇瀚澎",
+        "originalCount": 0,
+        "hint": "e"
+      },
+      {
+        "key": "v",
+        "chars": "滓渖沱溟泞喾鲎泶",
+        "originalCount": 0,
+        "hint": "S"
+      },
+      {
+        "key": "t",
+        "chars": "萎薇薰苌藜蓖翳莓",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "g",
+        "chars": "鳞鲸鳍鲤钰钝钙钺",
+        "originalCount": 0,
+        "hint": "o"
+      },
+      {
+        "key": "b",
+        "chars": "莛",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "吭嚎啐嗾啷唁唳哜",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "h",
+        "chars": "幡幄帻帏帔帙帼幞",
+        "originalCount": 0,
+        "hint": "Q"
+      },
+      {
+        "key": "n",
+        "chars": "忆羽巳忌巽乜忸怩",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "彰韶闽赣瘟歆鄣阊",
+        "originalCount": 0,
+        "hint": "M"
+      },
+      {
+        "key": "m",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "鞍靴鞠鞘鞅靶鞫匮",
+        "originalCount": 0,
+        "hint": "$"
+      },
+      {
+        "key": "9",
+        "chars": "捱捺揍撅郗挎欷掎",
+        "originalCount": 0,
+        "hint": "r"
+      },
+      {
+        "key": "o",
+        "chars": "鲇鲋鲈鲆鳄镉匐鳃",
+        "originalCount": 0,
+        "hint": "l"
+      },
+      {
+        "key": "l",
+        "chars": "匍鲂鳏鲫鳅鲠鳗锖",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "0",
+        "chars": "褒亢衮诠讹谯兖谶",
+        "originalCount": 0,
+        "hint": "R"
+      },
+      {
+        "key": "p",
+        "chars": "滨溶泻浣渲淀涫淙",
+        "originalCount": 0,
+        "hint": "v"
+      }
+    ]
+  },
+  {
+    "key": "*",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "荻芪菟藓莸芡萏檠",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "a",
+        "chars": "蠖蠛蚜蚶蛲蜮螨蝾",
+        "originalCount": 0,
+        "hint": "e"
+      },
+      {
+        "key": "z",
+        "chars": "罴黠罱圉黥黩畦黢",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "w",
+        "chars": "矶仄赝碓舂矾砼砜",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "s",
+        "chars": "鹱遛镞镝铳訇铈镟",
+        "originalCount": 0,
+        "hint": "T"
+      },
+      {
+        "key": "x",
+        "chars": "芴茑茆茚",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "蟥蜞",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "戡綦萘蕨苊苈蓐葳",
+        "originalCount": 0,
+        "hint": "C"
+      },
+      {
+        "key": "c",
+        "chars": "黟黪",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "笊徨筘稗箝篪篁籀",
+        "originalCount": 0,
+        "hint": "N"
+      },
+      {
+        "key": "f",
+        "chars": "署墨轩黜辕黯黔黝",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "v",
+        "chars": "磴硷",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "搬卑皓揪捶攒撬攥",
+        "originalCount": 0,
+        "hint": "C"
+      },
+      {
+        "key": "g",
+        "chars": "例登剑途愈侠债傅",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "b",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "袅勺枭镐钪孵鸵灸",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "h",
+        "chars": "滤濒濉淖泸滹瀣浈",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "n",
+        "chars": "墀觌韫圮圯堀坭謦",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "u",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "墓暮募萌摹鹊蔓蓦",
+        "originalCount": 0,
+        "hint": "H"
+      },
+      {
+        "key": "m",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "耒耦耨耜磲耖耢耠",
+        "originalCount": 0,
+        "hint": "J"
+      },
+      {
+        "key": "k",
+        "chars": "熟享郭豪哀亭衰敦",
+        "originalCount": 0,
+        "hint": "@"
+      },
+      {
+        "key": "9",
+        "chars": "铉锍铰锒凫铱锿钫",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "o",
+        "chars": "逾盒敛僵倩凳佥俞",
+        "originalCount": 0,
+        "hint": "Z"
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "伍叙癸斜俩兮侄傲",
+        "originalCount": 0,
+        "hint": "o"
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": "(",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "噘喱喹唪",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "咂嗒喋嗬呓哐嘞喵",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "z",
+        "chars": "街垂壬丢乖牡竿笺",
+        "originalCount": 0,
+        "hint": "G"
+      },
+      {
+        "key": "w",
+        "chars": "蔡芬巫巷巩孽蕉葵",
+        "originalCount": 0,
+        "hint": "9"
+      },
+      {
+        "key": "s",
+        "chars": "硖砘碡礓",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "哓嚆",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "觞锄锼邂锊钐锾觚",
+        "originalCount": 0,
+        "hint": "D"
+      },
+      {
+        "key": "d",
+        "chars": "嗄哒咴呸嗪呔嘹呖",
+        "originalCount": 0,
+        "hint": "q"
+      },
+      {
+        "key": "c",
+        "chars": "镨镱",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "r",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "待毛徒午靠迁赞廷",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "v",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "瘢夔痢疙瘪馘痿冼",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "g",
+        "chars": "厉咸励戌厨砰碛硎",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "b",
+        "chars": "翩扈谧氓诩昶戾扉",
+        "originalCount": 0,
+        "hint": "@"
+      },
+      {
+        "key": "y",
+        "chars": "擅摘摔掖攘皎拄搐",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "h",
+        "chars": "跪踏跨躁蹈啡踢蹲",
+        "originalCount": 0,
+        "hint": "C"
+      },
+      {
+        "key": "n",
+        "chars": "遍忘启讯肩亥扇妄",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "u",
+        "chars": "钔镁钭锩锫锎锑镧",
+        "originalCount": 0,
+        "hint": "c"
+      },
+      {
+        "key": "j",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "瑞丙珊枣棘逦郦璀",
+        "originalCount": 0,
+        "hint": "P"
+      },
+      {
+        "key": "i",
+        "chars": "銎莶茯荏觋莜茌蓊",
+        "originalCount": 0,
+        "hint": "G"
+      },
+      {
+        "key": "k",
+        "chars": "蠹橐噩璐卅豌翮鬲",
+        "originalCount": 0,
+        "hint": "C"
+      },
+      {
+        "key": "9",
+        "chars": "荼莅苻葆蛩苁荃芥",
+        "originalCount": 0,
+        "hint": "l"
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "萑苓芟芩荟跫蓓蘖",
+        "originalCount": 0,
+        "hint": "i"
+      },
+      {
+        "key": "0",
+        "chars": "雇扁赢劾盲谬诀肇",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  },
+  {
+    "key": ")",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "氰氘擗氙氕搌撖",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "a",
+        "chars": "杠柩檬栉柑榧槿桡",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "z",
+        "chars": "籁秣眚徕箐箦牾筻",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "w",
+        "chars": "蠲痊疹阕飒疥痤瘵",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "s",
+        "chars": "铬獯獐獍猬犷铤镍",
+        "originalCount": 0,
+        "hint": "!"
+      },
+      {
+        "key": "x",
+        "chars": "翎僦隽雠颔隼佼伉",
+        "originalCount": 0,
+        "hint": "M"
+      },
+      {
+        "key": "e",
+        "chars": "仵伥仟仡仫亻",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "d",
+        "chars": "崎盎颛酆崴遄岵崦",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "c",
+        "chars": "髻鬃髡髟碜髭鬣髫",
+        "originalCount": 0,
+        "hint": "M"
+      },
+      {
+        "key": "r",
+        "chars": "螭蝣",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "f",
+        "chars": "拷抟挝擂拮撵撷擀",
+        "originalCount": 0,
+        "hint": "O"
+      },
+      {
+        "key": "v",
+        "chars": "椹",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "傻侨侮倭佟恁赁俐",
+        "originalCount": 0,
+        "hint": "e"
+      },
+      {
+        "key": "g",
+        "chars": "秉甥熏穗秤簌笄竽",
+        "originalCount": 0,
+        "hint": "z"
+      },
+      {
+        "key": "b",
+        "chars": "瘊",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "螂曩晾虻蝙螃蛀暾",
+        "originalCount": 0,
+        "hint": "r"
+      },
+      {
+        "key": "h",
+        "chars": "址矗趟墟鹉霏赳趱",
+        "originalCount": 0,
+        "hint": "P"
+      },
+      {
+        "key": "n",
+        "chars": "氯氨摺氖氤氲抉氮",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "u",
+        "chars": "袒裰袂裆袢裎褶衿",
+        "originalCount": 0,
+        "hint": "%"
+      },
+      {
+        "key": "j",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "莎藩藻菹蕖菏汞鸫",
+        "originalCount": 0,
+        "hint": "E"
+      },
+      {
+        "key": "k",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "9",
+        "chars": "蹿躔跣趺跺蹶跚蹭",
+        "originalCount": 0,
+        "hint": "A"
+      },
+      {
+        "key": "o",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "l",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "抿氟摒氪氦氡氩氚",
+        "originalCount": 0,
+        "hint": "q"
+      },
+      {
+        "key": "p",
+        "chars": "掌尝赏沈浑浓裳棠",
+        "originalCount": 0,
+        "hint": "&"
+      }
+    ]
+  },
+  {
+    "key": "Z",
+    "blocks": [
+      {
+        "key": "q",
+        "chars": "铮镏鑫锪钨铆铫铯",
+        "originalCount": 0,
+        "hint": "L"
+      },
+      {
+        "key": "a",
+        "chars": "渫沤懑沏滢潆澌泔",
+        "originalCount": 0,
+        "hint": "b"
+      },
+      {
+        "key": "z",
+        "chars": "馑馍馐馁馕饴刨馅",
+        "originalCount": 0,
+        "hint": "Y"
+      },
+      {
+        "key": "w",
+        "chars": "喻哗叭嗡叽呛呤嗲",
+        "originalCount": 0,
+        "hint": "0"
+      },
+      {
+        "key": "s",
+        "chars": "臬昝劓迮犋齄鼽",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "x",
+        "chars": "牿彳夂丿",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "e",
+        "chars": "髅骷骰髀骶髁髌髑",
+        "originalCount": 0,
+        "hint": "L"
+      },
+      {
+        "key": "d",
+        "chars": "潦沥湎沣滟泷溱洧",
+        "originalCount": 0,
+        "hint": "u"
+      },
+      {
+        "key": "c",
+        "chars": "揉拚抒掇捅搔掺搡",
+        "originalCount": 0,
+        "hint": "i"
+      },
+      {
+        "key": "r",
+        "chars": "楝醅酲酽醑酴酡酐",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "f",
+        "chars": "楠鄄樯樾樗楮柰椟",
+        "originalCount": 0,
+        "hint": "v"
+      },
+      {
+        "key": "v",
+        "chars": "栲栳檑",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "t",
+        "chars": "笙笫笮攵篦牦秭筅",
+        "originalCount": 0,
+        "hint": "x"
+      },
+      {
+        "key": "g",
+        "chars": "萋蕤芋蔫荑薤蔌颟",
+        "originalCount": 0,
+        "hint": "j"
+      },
+      {
+        "key": "b",
+        "chars": "柒漭",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "y",
+        "chars": "檀椋柿槁榔榱枋槠",
+        "originalCount": 0,
+        "hint": "m"
+      },
+      {
+        "key": "h",
+        "chars": "纂牒徘篡牍衢牖鼾",
+        "originalCount": 0,
+        "hint": "s"
+      },
+      {
+        "key": "n",
+        "chars": "忒苡薜葭芑蓼贳苠",
+        "originalCount": 0,
+        "hint": "l"
+      },
+      {
+        "key": "u",
+        "chars": "溽尜",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "j",
+        "chars": "廾艹",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "m",
+        "chars": "椁檩",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "i",
+        "chars": "瓞",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "k",
+        "chars": "圳颉熹鼙瞽甏酃埙",
+        "originalCount": 0,
+        "hint": "B"
+      },
+      {
+        "key": "9",
+        "chars": "踔跏蹊盅踝咔鹭蹂",
+        "originalCount": 0,
+        "hint": ")"
+      },
+      {
+        "key": "o",
+        "chars": "俨鸽夙颌龛俪俅歙",
+        "originalCount": 0,
+        "hint": "H"
+      },
+      {
+        "key": "l",
+        "chars": "荬",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "0",
+        "chars": "哚哙咿咻噙唑噔噍",
+        "originalCount": 0,
+        "hint": ""
+      },
+      {
+        "key": "p",
+        "chars": "",
+        "originalCount": 0,
+        "hint": ""
+      }
+    ]
+  }
+]
+</script>
+<script>
+(() => {
+    'use strict';
+    const { width: WIDTH, height: HEIGHT, createCard, groupCards } = window.MingKwaiCards;
+    const svg = document.getElementById('card-art');
+    const viewport = document.getElementById('card-viewport');
+    const selector = document.getElementById('card-select');
+    const zoomInput = document.getElementById('zoom');
+    const zoomValue = document.getElementById('zoom-value');
+    const fitButton = document.getElementById('fit');
+    const sizeButton = document.getElementById('actual-size');
+    let cards = JSON.parse(document.getElementById('card-data').textContent);
+    let fitView = true;
+
+    function renderCard() {
+        const card = cards.find(item => item.key === selector.value) || cards[0];
+        const index = cards.indexOf(card);
+        svg.replaceChildren(createCard(card, index, cards.length, { idPrefix: 'preview-card' }));
+        document.getElementById('card-label').textContent = `字卡 ${card.key} · 第 ${Math.floor(index / 6) + 1} 组 / 第 ${index % 6 + 1} 滚筒`;
+    }
+    function fillSelector(preferred = 'G') {
+        selector.replaceChildren(...cards.map((card, index) => {
+            const option = document.createElement('option');
+            option.value = card.key;
+            option.textContent = `${String(index + 1).padStart(2, '0')}  ·  ${card.key}`;
+            return option;
+        }));
+        selector.value = cards.some(card => card.key === preferred) ? preferred : cards[0].key;
+        renderCard();
+    }
+    function setZoom(scale) {
+        scale = Math.max(.1, Math.min(1.6, scale));
+        svg.style.width = `${WIDTH * scale}px`;
+        svg.style.height = `${HEIGHT * scale}px`;
+        zoomInput.value = String(Math.round(scale * 100));
+        zoomValue.value = `${Math.round(scale * 100)}%`;
+        fitButton.setAttribute('aria-pressed', String(fitView));
+        sizeButton.setAttribute('aria-pressed', String(!fitView && Math.abs(scale - 1) < .001));
+    }
+    function fitCard() {
+        const style = getComputedStyle(viewport);
+        const available = viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        setZoom(Math.min(1, available / WIDTH));
+        viewport.scrollLeft = 0;
+    }
+    selector.addEventListener('change', renderCard);
+    zoomInput.addEventListener('input', () => { fitView = false; setZoom(Number(zoomInput.value) / 100); });
+    fitButton.addEventListener('click', () => { fitView = true; fitCard(); });
+    sizeButton.addEventListener('click', () => { fitView = false; setZoom(1); });
+    new ResizeObserver(() => { if (fitView) fitCard(); }).observe(viewport);
+    fillSelector();
+    fitCard();
+
+    // Embedded data keeps this preview usable when opened directly as a file.
+    // A local server uses the latest CSV, so edits to the real word table appear here.
+    function parseCSV(source) {
+        const rows = [];
+        let row = [], field = '', quoted = false;
+        for (let i = 0; i < source.length; i++) {
+            const char = source[i];
+            if (char === '"') {
+                if (quoted && source[i + 1] === '"') { field += '"'; i++; }
+                else quoted = !quoted;
+            } else if (char === ',' && !quoted) {
+                row.push(field); field = '';
+            } else if ((char === '\n' || char === '\r') && !quoted) {
+                if (char === '\r' && source[i + 1] === '\n') i++;
+                row.push(field); if (row.some(Boolean)) rows.push(row);
+                row = []; field = '';
+            } else field += char;
+        }
+        row.push(field); if (row.some(Boolean)) rows.push(row);
+        const headers = rows.shift();
+        return rows.map(values => Object.fromEntries(headers.map((name, i) => [name, values[i] || ''])));
+    }
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+        fetch('dev/wubi06.csv').then(response => {
+            if (!response.ok) throw new Error(`Unable to load cards: ${response.status}`);
+            return response.text();
+        }).then(source => {
+            const selected = selector.value;
+            cards = groupCards(parseCSV(source));
+            fillSelector(selected);
+        }).catch(() => {
+            const status = document.getElementById('data-status');
+            status.textContent = '字表暂时无法刷新，正在显示内置字卡。';
+            status.hidden = false;
+        });
+    }
+})();
+</script>
+</body>
+</html>

@@ -262,6 +262,63 @@ body {
     background: #eeeee5;
 }
 
+#magic_eye.card-stack {
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+    clip-path: none;
+}
+
+#card-stack-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.reader-opacity-control {
+    --track-length: clamp(20px, calc(var(--viewport-height) * 0.4 - 72px), 150px);
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 44px;
+    padding: 6px 0;
+    border: 1px solid #c9c4b3;
+    border-radius: 10px;
+    background: #f7f3e8f2;
+    box-shadow: 0 2px 8px #293c3712;
+    color: #485347;
+}
+
+.reader-opacity-control label { font-size: 11px; line-height: 14px; }
+.reader-opacity-control output { font: 10px/12px Menlo, Consolas, monospace; }
+.reader-opacity-track { position: relative; width: 44px; height: var(--track-length); }
+
+#reader-opacity {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--track-length);
+    height: 44px;
+    margin: 0;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    accent-color: #987b47;
+    cursor: pointer;
+    touch-action: none;
+}
+
+#reader-opacity:focus-visible { outline: 2px solid #987b47; outline-offset: 2px; }
+
 td {
     background: #fffdf5;
     border-color: #aaa993;
@@ -311,12 +368,33 @@ em {
 }
 
 .loading-instructions kbd {
-    padding: 2px 6px;
-    border: 1px solid #b9b19d;
-    border-radius: 4px;
-    background: #fffdf7;
-    font-family: Menlo, Consolas, monospace;
-    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #c6b58e;
+    border-radius: 50%;
+    background: transparent;
+    color: #8a392c;
+    font: 14px/1 Menlo, Consolas, monospace;
+    vertical-align: middle;
+}
+
+.loading-instructions kbd.choice-key {
+    border-color: #bdb6a5;
+    border-radius: 5px;
+    background: #f7f3e8;
+    color: #24382f;
+}
+
+.loading-choice-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    vertical-align: middle;
 }
 
 .loading-tip, #loading-status {

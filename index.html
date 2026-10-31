@@ -5,7 +5,9 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=0.8, interactive-widget=resizes-content">
 		<!-- link to main stylesheet -->
+        <link rel="preload" href="assets/fangsong.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 		<link rel="stylesheet" type="text/css" href="style.css">
+        <link rel="stylesheet" href="cards.css">
 		<!-- link to fonts -->
 		<link href="https://fonts.googleapis.com/css?family=Barlow+Semi+Condensed:100i,200i,400|Cinzel|Playfair+Display:400,400i|Exo:300,600|Roboto:400|Roboto+Condensed:300|Dancing+Script:400|PT+Serif:400,400i|Palanquin+Dark:400|Noto+Serif:400,400i" rel="stylesheet">
 		<!-- Global site tag (gtag.js) - Google Analytics -->
@@ -25,8 +27,9 @@
             <p>用五笔前两码选字，再按数字键印下汉字。</p>
             <ol class="loading-instructions">
                 <li>第一码用<strong>大写字母</strong>选择滚筒，第二码用<strong>小写字母</strong>选择字模组。</li>
-                <li>在下方魔术眼中选字：右列从上到下为 <strong>1–4</strong>，左列为 <strong>5–8</strong>。空格键留白。</li>
-                <li>试着输入 <kbd>J</kbd> <kbd>e</kbd> <kbd>1</kbd>，打出「明」。</li>
+                <li>字卡中候选字从上到下对应
+                    <span class="loading-choice-keys"><kbd class="choice-key">1</kbd>–<kbd class="choice-key">8</kbd></span>，最下方为翻页提示。空格键留白。</li>
+                <li>试着输入 <kbd>J</kbd> <kbd>e</kbd> <kbd class="choice-key">1</kbd>，打出「明」。</li>
                 <li>若字卡没有需要的字，可按字卡上的提示继续翻页，寻找红色借位字。</li>
                 <li>可拖动、缩放查看机械，双击恢复视角。</li>
             </ol>
@@ -63,9 +66,23 @@
         </div>
         <div id="animation">
         </div>
+        <!-- Previous moving-table magic eye:
         <div id="magic_eye">
             <div id="magic-eye-mask" aria-hidden="true"></div>
             <table id="table" aria-label="魔术眼候选字"></table>
+        </div>
+        -->
+        <div id="magic_eye" class="card-stack">
+            <svg id="card-stack-art" xmlns="http://www.w3.org/2000/svg" viewBox="-31 0 1863 478"
+                role="img" aria-label="魔术眼：36 张叠放字卡，字面底色不透明度 75%；上覆半透明磨砂遮罩，单道清晰竖缝随选字列移动" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="reader-opacity-control">
+                <label for="reader-opacity">遮罩</label>
+                <div class="reader-opacity-track">
+                    <input id="reader-opacity" type="range" min="0" max="100" step="1" value="70"
+                        aria-label="遮罩不透明度" aria-orientation="vertical" aria-valuetext="70%">
+                </div>
+                <output id="reader-opacity-value" for="reader-opacity" aria-hidden="true">70%</output>
+            </div>
         </div>
 
         <script src="loading.js"></script>

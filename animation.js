@@ -1,7 +1,6 @@
 // The mechanism follows the same selection and strike state as the magic eye.
 (() => {
     const container = document.getElementById('animation');
-    const table = document.getElementById('table');
     const paper = document.getElementById('text');
     const { groupCount, rollersPerGroup, facesPerRoller, columnCount } = machineLayout;
     const scene = new THREE.Scene();
@@ -594,11 +593,11 @@
         updateResetView(performance.now());
         const delta = Math.min(clock.getDelta(), 0.05);
         const blend = !initialized || reducedMotion.matches ? 1 : 1 - Math.exp(-22 * delta);
-        const top = parseFloat(table.style.top) || 0;
-        const progress = tableTo === tableFrom ? 1 : THREE.MathUtils.clamp((top - tableFrom) / (tableTo - tableFrom), 0, 1);
-        const selection = reducedMotion.matches ? 1 : progress;
-        const largeAngle = THREE.MathUtils.lerp(largeFrom, largeTo, selection);
-        const mediumAngle = THREE.MathUtils.lerp(mediumFrom, mediumTo, selection);
+        const selection = currentMechanismSelection();
+        updateCardStack(selection.row);
+        updateCardReader(selection.column);
+        const largeAngle = selection.large;
+        const mediumAngle = selection.medium;
         large.rotation.x = THREE.MathUtils.lerp(large.rotation.x, largeAngle, blend);
         mediumGroups.forEach((medium, i) => {
             medium.rotation.x = THREE.MathUtils.lerp(medium.rotation.x, -turn * i / groupCount + mediumAngle, blend);
@@ -609,14 +608,7 @@
             const target = -turn * (index % rollersPerGroup) / rollersPerGroup + faceAngle;
             roller.rotation.x = THREE.MathUtils.lerp(roller.rotation.x, target, blend);
         });
-        const firstColumn = rect.width / 2 - rect2.width / 2 - Number(spacing[0]);
-        const columnWidth = rect2.width + Number(spacing[0]);
-        const tableLeft = parseFloat(table.style.left);
-        // The CSV-built table has no inline position on the first frames.
-        // Never feed NaN into lerp: it would keep the carriage invisible forever.
-        const column = Number.isFinite(tableLeft) && columnWidth > 0
-            ? THREE.MathUtils.clamp((firstColumn - tableLeft) / columnWidth, 0, columnCount - 1)
-            : col;
+        const column = selection.column;
         carriage.position.x = THREE.MathUtils.lerp(carriage.position.x, -9.75 + (column + 0.5) * 19.5 / columnCount, blend);
         initialized = true;
         scene.updateMatrixWorld(true);

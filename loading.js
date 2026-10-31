@@ -5,11 +5,15 @@
     const start = document.getElementById('start-typing');
     const label = document.getElementById('start-typing-label');
     const progress = document.getElementById('loading-progress');
+    const typingSurface = document.getElementById('text');
     const weights = { d3: 2, three: 2, candidateDownload: 2, candidates: 4, rollerText: 2, rollerFont: 44, wood: 4, font: 10, mechanism: 30 };
     const pending = new Set(Object.keys(weights));
     const fractions = Object.fromEntries(Object.keys(weights).map(part => [part, 0]));
     let failed = false;
     let started = false;
+    let dismissed = false;
+    // The dialog waits for its font, so keep the input inactive during preload.
+    typingSurface.inert = true;
 
     function renderProgress() {
         if (!started) return;
@@ -24,7 +28,7 @@
     }
 
     window.simulatorLoading = {
-        get active() { return screen.open; },
+        get active() { return !dismissed; },
         report(part, fraction) {
             if (failed || !pending.has(part)) return;
             fractions[part] = Math.max(fractions[part], Math.min(0.99, Math.max(0, fraction)));
@@ -63,7 +67,7 @@
             start.removeAttribute('aria-describedby');
         },
         fail(error) {
-            if (!screen.open) return;
+            if (dismissed) return;
             failed = true;
             console.error('Unable to prepare simulator:', error);
             status.textContent = '加载未完成，请检查网络后重试。';
@@ -74,7 +78,6 @@
         }
     };
 
-    screen.showModal();
     screen.addEventListener('cancel', event => event.preventDefault());
     start.addEventListener('click', () => {
         if (failed) {
@@ -82,13 +85,13 @@
             return;
         }
         if (pending.size) return;
+        dismissed = true;
         screen.close();
         // This user gesture also allows mobile browsers to open the keyboard.
-        document.getElementById('text').focus({ preventScroll: true });
+        typingSurface.inert = false;
+        typingSurface.focus({ preventScroll: true });
     });
     window.addEventListener('error', event => window.simulatorLoading.fail(event.error || event.message));
-    document.fonts.ready.then(() => window.simulatorLoading.ready('font'))
-        .catch(error => window.simulatorLoading.fail(error));
 
     function loadScript(url, part) {
         return new Promise((resolve, reject) => {
@@ -103,18 +106,29 @@
         });
     }
 
-    // Let the browser paint the empty bar before cached scripts and assets can
-    // advance it. Two animation frames provide a paint between the callbacks.
-    requestAnimationFrame(() => requestAnimationFrame(async () => {
-        started = true;
-        renderProgress();
+    async function startLoading() {
         try {
+            // assets/fangsong.ttf is FangSong_GB2312. Explicit loading also
+            // fetches it while the dialog is still hidden.
+            const faces = await document.fonts.load('16px "FangSong"', '明快打字机模拟器');
+            if (!faces.length) throw new Error('FangSong_GB2312 font is unavailable');
+            window.simulatorLoading.ready('font');
+            screen.showModal();
+            if (failed) return;
+            // Paint the font-ready dialog before cached scripts advance progress.
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            started = true;
+            renderProgress();
             await loadScript('https://d3js.org/d3.v7.min.js', 'd3');
             await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'three');
+            await loadScript('cards.js');
             await loadScript('magic_eye.js');
             await loadScript('animation.js');
         } catch (error) {
+            // A failed font download must still expose the retry button.
+            if (!screen.open) screen.showModal();
             window.simulatorLoading.fail(error);
         }
-    }));
+    }
+    startLoading();
 })();

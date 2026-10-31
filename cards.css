@@ -1,0 +1,14 @@
+.mingkwai-card {
+    --mono: Menlo, Consolas, monospace;
+    --code-red: #8a392c;
+}
+
+.mingkwai-card .code-badge { fill: #e6dcc3; stroke: #c6b58e; stroke-width: .8; }
+
+.mingkwai-card .tab-key { font: 22px var(--mono); fill: var(--code-red); }
+.mingkwai-card .tab-number { font: 9px var(--mono); letter-spacing: 1px; fill: var(--code-red); }
+.mingkwai-card .column-key { font: 14px var(--mono); fill: var(--code-red); }
+.mingkwai-card .character { font: 22px FangSong, 'Songti SC', 'Noto Serif CJK SC', serif; fill: #15221d; }
+.mingkwai-card .borrowed { fill: #8a392c; }
+.mingkwai-card .hint-code { font: 14px var(--mono); fill: var(--code-red); }
+.mingkwai-card .station-number { font: 9px var(--mono); letter-spacing: 1px; fill: #9a8a66; }
