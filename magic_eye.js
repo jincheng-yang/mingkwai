@@ -42,6 +42,8 @@ let lastCardRow = null;
 let readerCover = null;
 let readerMotion = null;
 let readerMarkerCache = null;
+let cardStackMotion = null;
+let mobileKeyboardOpen = false;
 let lastReaderColumn = null;
 let readerViewport = null;
 const readerSlitPadding = 4;
@@ -173,17 +175,23 @@ function layoutCardReader() {
     // Reserve a left gutter for the slider while the cover reaches every edge.
     const leftInset = readerOpacityControl ? 64 : 16;
     const rightInset = 16;
-    const scale = Math.min(Math.max(1, bounds.width - leftInset - rightInset) / cardWidth, Math.max(1, bounds.height - 24) / height);
+    const aperture = readerApertureAt(0);
+    // In the narrow keyboard pane, fit the candidates rather than the whole card.
+    const scale = mobileKeyboardOpen
+        ? Math.min(Math.max(1, bounds.width - 16) / 110, Math.max(1, bounds.height - 80) / aperture.height)
+        : Math.min(Math.max(1, bounds.width - leftInset - rightInset) / cardWidth, Math.max(1, bounds.height - 24) / height);
     const viewWidth = bounds.width / scale;
     const viewHeight = bounds.height / scale;
     const viewport = {
-        x: selectionShift + (cardWidth - viewWidth) / 2 - (leftInset - rightInset) / (2 * scale),
-        y: (height - viewHeight) / 2,
+        x: mobileKeyboardOpen ? aperture.x + aperture.width / 2 - viewWidth / 2
+            : selectionShift + (cardWidth - viewWidth) / 2 - (leftInset - rightInset) / (2 * scale),
+        y: mobileKeyboardOpen ? aperture.y + aperture.height / 2 - viewHeight / 2 : (height - viewHeight) / 2,
         width: viewWidth, height: viewHeight
     };
     document.getElementById('card-stack-art').setAttribute('viewBox', `${viewport.x} ${viewport.y} ${viewWidth} ${viewHeight}`);
     readerViewport = viewport;
     layoutReaderCover();
+    positionCardReader(lastReaderColumn ?? currentMechanismSelection().column);
     if (cardRasterCache) {
         const rasterScale = scale * (window.devicePixelRatio || 1);
         const rasterizing = Promise.all([
@@ -224,6 +232,7 @@ async function renderCardStack(data) {
     // Later cards sit above earlier ones, exposing a selected tab as it moves left.
     const layers = eyeSvgElement('g', { id: 'card-stack-layers' });
     layers.replaceChildren(...cardLayers);
+    cardStackMotion = layers;
 
     // Draw the cached stack once beneath the cover's clear opening.
     readerCover = eyeSvgElement('path', {
@@ -247,9 +256,17 @@ async function renderCardStack(data) {
 function updateCardReader(animatedColumn) {
     if (!readerCover || animatedColumn === lastReaderColumn) return;
     lastReaderColumn = animatedColumn;
+    positionCardReader(animatedColumn);
+}
+
+function positionCardReader(animatedColumn) {
+    if (!readerMotion || !cardStackMotion) return;
     const { slitAt } = window.MingKwaiCards;
     const offset = slitAt(animatedColumn).x - slitAt(0).x;
-    readerMotion.setAttribute('transform', `translate(${offset} 0)`);
+    const coverTransform = `translate(${mobileKeyboardOpen ? 0 : offset} 0)`;
+    const cardsTransform = `translate(${mobileKeyboardOpen ? -offset : 0} 0)`;
+    if (readerMotion.getAttribute('transform') !== coverTransform) readerMotion.setAttribute('transform', coverTransform);
+    if (cardStackMotion.getAttribute('transform') !== cardsTransform) cardStackMotion.setAttribute('transform', cardsTransform);
 }
 
 function updateCardStack(animatedRow) {
@@ -518,10 +535,37 @@ document.addEventListener('keyup', event => {
 });
 window.addEventListener('blur', releaseStrike);
 
+let keyboardClosedHeight = 0;
+let keyboardClosedWidth = 0;
+
 function resizeVisibleViewport() {
     const viewport = window.visualViewport;
-    document.documentElement.style.setProperty('--viewport-height', `${viewport ? viewport.height : window.innerHeight}px`);
+    const visibleHeight = viewport ? viewport.height : window.innerHeight;
+    // Normalize pinch zoom so zooming alone does not look like a keyboard.
+    const normalizedHeight = visibleHeight * (viewport?.scale || 1);
+    const layoutWidth = document.documentElement.clientWidth;
+    const focused = document.activeElement === typingSurface;
+    if (!keyboardClosedHeight || Math.abs(layoutWidth - keyboardClosedWidth) > 50) {
+        // Rotation may occur while the keyboard is already open.
+        keyboardClosedHeight = mobileKeyboardOpen && focused
+            ? Math.max(normalizedHeight, window.screen.availHeight) : normalizedHeight;
+        keyboardClosedWidth = layoutWidth;
+    } else if (!focused || !mobileKeyboardOpen) {
+        keyboardClosedHeight = Math.max(keyboardClosedHeight, normalizedHeight);
+    }
+    const threshold = Math.max(100, keyboardClosedHeight * 0.18);
+    const keyboardOpen = touchKeyboard.matches && focused && (
+        (navigator.virtualKeyboard?.boundingRect.height || 0) > 0
+        || keyboardClosedHeight - normalizedHeight > threshold
+    );
+    document.documentElement.style.setProperty('--viewport-height', `${visibleHeight}px`);
     document.documentElement.style.setProperty('--viewport-top', `${viewport ? viewport.offsetTop : 0}px`);
+    if (keyboardOpen !== mobileKeyboardOpen) {
+        mobileKeyboardOpen = keyboardOpen;
+        document.documentElement.classList.toggle('mobile-keyboard-open', keyboardOpen);
+        layoutCardReader();
+        window.requestMechanismRender?.(1600);
+    }
 }
 
 // Mobile keyboards often resize only the visual viewport, not the layout
@@ -529,6 +573,10 @@ function resizeVisibleViewport() {
 window.visualViewport?.addEventListener('resize', resizeVisibleViewport);
 window.visualViewport?.addEventListener('scroll', resizeVisibleViewport);
 window.addEventListener('resize', resizeVisibleViewport);
+typingSurface.addEventListener('focus', resizeVisibleViewport);
+typingSurface.addEventListener('blur', resizeVisibleViewport);
+touchKeyboard.addEventListener('change', resizeVisibleViewport);
+navigator.virtualKeyboard?.addEventListener('geometrychange', resizeVisibleViewport);
 resizeVisibleViewport();
 
 // The instruction screen focuses the typing surface when the user starts.
