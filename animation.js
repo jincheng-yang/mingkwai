@@ -178,7 +178,11 @@
         mediumGroups.push(medium);
         for (let j = 0; j < rollersPerGroup; j++) {
             const small = new THREE.Group();
-            const angle = turn * j / rollersPerGroup;
+            // The 2:1 gear train adds two carrier turns to each middle
+            // assembly. Re-index its rollers so selection still places the
+            // requested row directly behind the eyepiece when it settles.
+            const angle = turn * j / rollersPerGroup + 2 * turn * i / groupCount;
+            small.userData.assemblyAngle = angle;
             small.position.set(0, -rollerOrbitRadius * Math.cos(angle), rollerOrbitRadius * Math.sin(angle));
             small.rotation.x = -angle;
             medium.add(small);
@@ -414,7 +418,7 @@
             sleeve.position.x = -supportThickness / 2;
             support.add(sleeve);
             sleeve.name = 'left-starfish-hollow-cylinder';
-            const innerSleeve = new THREE.Mesh(innerSleeveGeometry, [steel, steel, darkMetal]);
+            const innerSleeve = new THREE.Mesh(innerSleeveGeometry, [steel, brass, darkMetal]);
             innerSleeve.position.x = sleeve.position.x;
             innerSleeve.name = 'left-starfish-inner-hollow-cylinder';
             support.add(innerSleeve);
@@ -544,7 +548,7 @@
     const rightInnerSleeveGeometry = sleeveGeometry(rightSleeveInnerRadius,
         rightInnerSleeveBoreRadius, 0, 0,
         leftSleeveLength + rightGearThickness + rightSleeveRootOverlap);
-    const rightInnerSleeve = new THREE.Mesh(rightInnerSleeveGeometry, [steel, steel, darkMetal]);
+    const rightInnerSleeve = new THREE.Mesh(rightInnerSleeveGeometry, [steel, brass, darkMetal]);
     rightInnerSleeve.name = 'right-starfish-inner-hollow-cylinder';
     rightInnerSleeve.rotation.y = Math.PI;
     rightInnerSleeve.position.x = -rightGearThickness / 2 - rightSleeveRootOverlap;
@@ -1106,7 +1110,7 @@
         const strike = THREE.MathUtils.clamp(parseFloat(paper.style.getPropertyValue('--strike-progress')) || 0, 0, 1);
         rollers.forEach((roller, index) => {
             const faceAngle = index === row && ind >= 0 && ind < facesPerRoller ? turn * ind / facesPerRoller * strike : 0;
-            const target = -turn * (index % rollersPerGroup) / rollersPerGroup + faceAngle;
+            const target = -roller.userData.assemblyAngle + faceAngle;
             roller.rotation.x = THREE.MathUtils.lerp(roller.rotation.x, target, blend);
         });
         const column = selection.column;
