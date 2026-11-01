@@ -34,14 +34,14 @@
             candidatesUrl: 'dev/shuangpin-xiaohe/shuangpin-xiaohe.csv', candidatesBytes: 49304,
             rollerTextUrl: 'dev/shuangpin-xiaohe/shuangpin-xiaohe.txt', rollerTextBytes: 24479,
             description: '用小鹤双拼的声母码和韵母码选字，再按数字键印下汉字。',
-            exampleRow: 'M', exampleColumn: 'k', initialRow: 'M', initialColumn: 'k'
+            exampleRow: 'M', exampleColumn: 'k', initialRow: 'Z', initialColumn: 'i'
         }),
         'shuangpin-microsoft': Object.freeze({
             id: 'shuangpin-microsoft', name: '微软双拼',
             candidatesUrl: 'dev/shuangpin-microsoft/shuangpin-microsoft.csv', candidatesBytes: 49304,
             rollerTextUrl: 'dev/shuangpin-microsoft/shuangpin-microsoft.txt', rollerTextBytes: 24479,
             description: '用微软双拼选字，再按数字键印下汉字。韵母 ing 使用分号 ; 键。',
-            exampleRow: 'M', exampleColumn: ';', initialRow: 'M', initialColumn: ';',
+            exampleRow: 'M', exampleColumn: ';', initialRow: 'Z', initialColumn: 'i',
             columnKeys: 'qazwsxedcrfvtgbyhnujmik;ol0p'
         }),
         'shuangpin-abc': Object.freeze({
@@ -49,7 +49,7 @@
             candidatesUrl: 'dev/shuangpin-abc/shuangpin-abc.csv', candidatesBytes: 49304,
             rollerTextUrl: 'dev/shuangpin-abc/shuangpin-abc.txt', rollerTextBytes: 24479,
             description: '用智能ABC双拼选字，再按数字键印下汉字。',
-            exampleRow: 'M', exampleColumn: 'y', initialRow: 'M', initialColumn: 'y'
+            exampleRow: 'M', exampleColumn: 'y', initialRow: 'Z', initialColumn: 'i'
         })
     });
     const requestedScheme = new URL(window.location.href).searchParams.get('scheme');
