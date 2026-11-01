@@ -121,7 +121,7 @@
         stock.append(element('path', { class: 'card-outline', d: outline, fill: 'none', stroke: '#c3ac7d', 'stroke-width': 1 }));
         svg.replaceChildren(title, description, defs, stock);
         svg.append(text(tabCenter, 35, card.key, 'tab-key'));
-        svg.append(text(tabCenter, 51, String(index + 1).padStart(2, '0'), 'tab-number'));
+        svg.append(text(tabCenter, 51, `${Math.floor(index / 6) + 1}·${index % 6 + 1}`, 'tab-number'));
         svg.append(element('rect', {
             x: tabSlitLeft - .5, y: tabSlitTop - .5,
             width: TAB_SLIT_WIDTH + 1, height: TAB_SLIT_HEIGHT + 1, rx: (TAB_SLIT_WIDTH + 1) / 2,

@@ -6428,7 +6428,7 @@
         selector.replaceChildren(...cards.map((card, index) => {
             const option = document.createElement('option');
             option.value = card.key;
-            option.textContent = `${String(index + 1).padStart(2, '0')}  ·  ${card.key}`;
+            option.textContent = `${Math.floor(index / 6) + 1}·${index % 6 + 1}  ·  ${card.key}`;
             return option;
         }));
         selector.value = cards.some(card => card.key === preferred) ? preferred : cards[0].key;

@@ -22,6 +22,8 @@ var largeFrom = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / 
 var largeTo = largeFrom;
 var mediumFrom = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
 var mediumTo = mediumFrom;
+var centerGearFrom = -mediumFrom / 2;
+var centerGearTo = centerGearFrom;
 var ind = -1;
 
 const sound_keydown = new Audio('assets/audio/keydown.mp3');
@@ -104,6 +106,7 @@ function currentMechanismSelection(now = performance.now()) {
         row: rowFrom + (row - rowFrom) * rowProgress,
         large: largeFrom + (largeTo - largeFrom) * rowProgress,
         medium: mediumFrom + (mediumTo - mediumFrom) * rowProgress,
+        centerGear: centerGearFrom + (centerGearTo - centerGearFrom) * rowProgress,
         column: columnFrom + (col - columnFrom) * columnProgress
     };
 }
@@ -370,12 +373,16 @@ function typeKey(key, mobile = false) {
         rowFrom = current.row;
         largeFrom = current.large;
         mediumFrom = current.medium;
+        centerGearFrom = current.centerGear;
         rowMoveStartedAt = now;
         row = newRow;
         largeTo = clockwiseTargetAngle(
             Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount,
             largeFrom);
         mediumTo = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
+        // The center cam keeps turning counterclockwise, using the return
+        // sector instead of reversing when an earlier stair is selected.
+        centerGearTo = -clockwiseTargetAngle(mediumTo / 2, -centerGearFrom);
         const position = selectedPosition();
         if (position) {
             d3.select(candidateTable).interrupt('row').transition('row')

@@ -257,10 +257,11 @@
     const leftSleeveOuterRadius = (2.5 / 2) * modelUnitsPerInch;
     const leftSleeveInnerRadius = leftSleeveOuterRadius - supportThickness;
     function sleeveGeometry(outerRadius, innerRadius, stepHeight, stepStart = 0,
-        length = leftSleeveLength, stairSweep = turn) {
+        length = leftSleeveLength, stairSweep = turn, taperReturnRadially = false) {
         const stairCount = 6;
         const segmentsPerStair = 32;
         const sectionCount = stairCount + (stairSweep < turn ? 1 : 0);
+        const tipWidth = Math.min(outerRadius - innerRadius, 0.01 * modelUnitsPerInch);
         const positions = [];
         const groups = [];
         function point(radius, x, angle) {
@@ -268,10 +269,19 @@
         }
         function quad(a, b, c, d, materialIndex = 0) {
             const start = positions.length / 3;
-            positions.push(...a, ...b, ...c, ...a, ...c, ...d);
+            for (const [p, q, r] of [[a, b, c], [a, c, d]]) {
+                const u = q.map((value, i) => value - p[i]);
+                const v = r.map((value, i) => value - p[i]);
+                const area = Math.hypot(u[1] * v[2] - u[2] * v[1],
+                    u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]);
+                // At the taper's zero-thickness tip, a quad becomes a triangle.
+                if (area > 1e-12) positions.push(...p, ...q, ...r);
+            }
+            const count = positions.length / 3 - start;
+            if (!count) return;
             const previous = groups[groups.length - 1];
-            if (previous && previous.materialIndex === materialIndex) previous.count += 6;
-            else groups.push({ start, count: 6, materialIndex });
+            if (previous && previous.materialIndex === materialIndex) previous.count += count;
+            else groups.push({ start, count, materialIndex });
         }
         for (let section = 0; section < sectionCount; section++) {
             const stair = Math.min(section, stairCount - 1);
@@ -285,12 +295,20 @@
                 const a0 = startAngle + (endAngle - startAngle) * t0;
                 const a1 = startAngle + (endAngle - startAngle) * t1;
                 const x = -length + stepStart + stair * stepHeight;
-                const outer0 = point(outerRadius, x, a0);
-                const outer1 = point(outerRadius, x, a1);
+                const isReturn = taperReturnRadially && section === sectionCount - 1;
+                // Quintic easing gives zero slope and curvature at both ends,
+                // smoothly joining the full-width wall and the thin tip.
+                const remainingWidth = t => 1 - t * t * t * (t * (6 * t - 15) + 10);
+                const radius0 = isReturn ? innerRadius + tipWidth
+                    + (outerRadius - innerRadius - tipWidth) * remainingWidth(t0) : outerRadius;
+                const radius1 = isReturn ? innerRadius + tipWidth
+                    + (outerRadius - innerRadius - tipWidth) * remainingWidth(t1) : outerRadius;
+                const outer0 = point(radius0, x, a0);
+                const outer1 = point(radius1, x, a1);
                 const inner0 = point(innerRadius, x, a0);
                 const inner1 = point(innerRadius, x, a1);
-                const backOuter0 = point(outerRadius, 0, a0);
-                const backOuter1 = point(outerRadius, 0, a1);
+                const backOuter0 = point(radius0, 0, a0);
+                const backOuter1 = point(radius1, 0, a1);
                 const backInner0 = point(innerRadius, 0, a0);
                 const backInner1 = point(innerRadius, 0, a1);
                 quad(outer0, outer1, backOuter1, backOuter0, 2);
@@ -303,7 +321,15 @@
             const endX = -length + stepStart + stair * stepHeight;
             const nextStair = Math.min((section + 1) % sectionCount, stairCount - 1);
             const nextX = -length + stepStart + nextStair * stepHeight;
-            if (endX !== nextX) {
+            if (taperReturnRadially && section === sectionCount - 1) {
+                // Close both exposed faces of the finite-width tip: its deep
+                // end and the first stair's wider, shallower radial section.
+                const tipRadius = innerRadius + tipWidth;
+                quad(point(innerRadius, endX, angle), point(innerRadius, nextX, angle),
+                    point(tipRadius, nextX, angle), point(tipRadius, endX, angle), 1);
+                quad(point(tipRadius, nextX, angle), point(outerRadius, nextX, angle),
+                    point(outerRadius, 0, angle), point(tipRadius, 0, angle), 1);
+            } else if (endX !== nextX) {
                 const corners = [point(innerRadius, endX, angle),
                     point(innerRadius, nextX, angle),
                     point(outerRadius, nextX, angle),
@@ -321,7 +347,7 @@
     }
     const leftSleeveGeometry = sleeveGeometry(leftSleeveOuterRadius,
         leftSleeveInnerRadius, -0.1 * modelUnitsPerInch,
-        leftSleeveLength - 0.2 * modelUnitsPerInch);
+        leftSleeveLength - 0.1 * modelUnitsPerInch, leftSleeveLength, turn, true);
     // Turn the stepped sleeve end-for-end: its level rim is now at the full
     // 1.0-inch outer edge, while its six steps face back toward the machine.
     leftSleeveGeometry.rotateY(Math.PI);
@@ -523,11 +549,11 @@
     rightInnerSleeve.rotation.y = Math.PI;
     rightInnerSleeve.position.x = -rightGearThickness / 2 - rightSleeveRootOverlap;
     centerGear.add(rightInnerSleeve);
-    // Six 30-degree stairs occupy one half; the other half remains level
-    // with the final stair, keeping the return seam at the starting arm.
+    // Six 30-degree stairs start 0.1 in deep. The remaining half-circle
+    // keeps stair six's axial height while its radial wall tapers to 0.01 in.
     const rightSteppedSleeveGeometry = sleeveGeometry(rightSleeveOuterRadius,
         rightSleeveInnerRadius, -0.1 * modelUnitsPerInch,
-        leftSleeveLength - 0.2 * modelUnitsPerInch, leftSleeveLength, Math.PI);
+        leftSleeveLength - 0.1 * modelUnitsPerInch, leftSleeveLength, Math.PI, true);
     rightSteppedSleeveGeometry.rotateY(Math.PI);
     rightSteppedSleeveGeometry.translate(-leftSleeveLength, 0, 0);
     rightSteppedSleeveGeometry.rotateX(Math.PI);
@@ -1044,6 +1070,7 @@
 
     const clock = new THREE.Clock();
     let initialized = false;
+    let centerGearWorldAngle = 0;
     let frameRequest = null;
     let renderUntil = 0;
     function requestRender(duration = 0) {
@@ -1067,17 +1094,14 @@
             detailSelectedRoller(row).catch(error => console.error('Unable to refine roller lettering:', error));
         }
         const largeAngle = selection.large;
-        const mediumAngle = selection.medium;
         large.rotation.x = THREE.MathUtils.lerp(large.rotation.x, largeAngle, blend);
+        // Solve the 2:1 mesh, then rotate each complete middle assembly with
+        // its gear. The hexagonal plates and hex caps inherit that same turn.
+        centerGearWorldAngle = THREE.MathUtils.lerp(centerGearWorldAngle, selection.centerGear, blend);
+        centerGear.rotation.x = centerGearWorldAngle - large.rotation.x;
         mediumGroups.forEach((medium, i) => {
-            medium.rotation.x = THREE.MathUtils.lerp(medium.rotation.x, -turn * i / groupCount + mediumAngle, blend);
-        });
-        // Cancel carrier motion at the center gear. The small gears roll
-        // around it with the additional rotation required by the 2:1 ratio.
-        // Middle-roller selection still drives the center at half speed.
-        centerGear.rotation.x = -large.rotation.x - mediumGroups[0].rotation.x / 2;
-        rightSmallGears.forEach(gear => {
-            gear.rotation.x = 2 * large.rotation.x;
+            medium.rotation.x = -turn * i / groupCount - 2 * centerGear.rotation.x;
+            rightSmallGears[i].rotation.x = 0;
         });
         const strike = THREE.MathUtils.clamp(parseFloat(paper.style.getPropertyValue('--strike-progress')) || 0, 0, 1);
         rollers.forEach((roller, index) => {
