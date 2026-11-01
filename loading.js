@@ -150,9 +150,9 @@
         if (pending.size) return;
         dismissed = true;
         screen.close();
-        // This user gesture also allows mobile browsers to open the keyboard.
         typingSurface.inert = false;
-        typingSurface.focus({ preventScroll: true });
+        // Desktop input is captured at document level. Open the mobile keyboard
+        // only when the user taps the paper or its keyboard button.
     });
     window.addEventListener('error', event => window.simulatorLoading.fail(event.error || event.message));
 
@@ -186,6 +186,10 @@
             await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', 'three');
             await loadScript('cards.js');
             await loadScript('card-raster.js');
+            await loadScript('machine-state.js');
+            await loadScript('paper.js');
+            await loadScript('keyboard.js');
+            await loadScript('layout.js');
             await loadScript('magic_eye.js');
             await loadScript('animation.js');
         } catch (error) {

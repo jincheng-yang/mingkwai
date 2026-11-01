@@ -10,6 +10,11 @@
     --viewport-height: 100vh;
     --viewport-height: 100dvh;
     --viewport-top: 0px;
+    --paper-window-height: 3.375rem;
+    --divider-size: 6px;
+    --reader-window-height: calc(var(--viewport-height) * 0.4);
+    --machine-pane-width: calc((100vw - var(--divider-size)) * 2 / 3);
+    --machine-background: radial-gradient(ellipse at 50% 40%, #fffdf7 0%, #edeae1 65%, #dcded5 100%);
 }
 
 body {
@@ -20,7 +25,7 @@ body {
 #typewriter {
     background: rgb(240, 240, 238);
     width: 100%;
-    height: 3em;
+    height: var(--paper-window-height);
     position: fixed;
     left: 0;
     top: var(--viewport-top);
@@ -31,13 +36,13 @@ body {
 }
 
 #animation {
-    background: radial-gradient(ellipse at 50% 40%, #fffdf7 0%, #edeae1 65%, #dcded5 100%);
+    background: var(--machine-background);
     overflow: hidden;
-    border-bottom: 1px solid #b8b6a8;
+    border-bottom: 0;
     display: flex;
     position: fixed;
-    top: calc(var(--viewport-top) + 4.5rem + 1px);
-    height: max(0px, calc(var(--viewport-height) * 0.6 - 4.5rem - 1px));
+    top: calc(var(--viewport-top) + var(--paper-window-height) + var(--divider-size));
+    height: max(0px, calc(var(--viewport-height) - var(--reader-window-height) - var(--paper-window-height) - var(--divider-size) * 2));
     left: 0;
     right: 0;
     z-index: 1;
@@ -47,8 +52,8 @@ body {
 #magic_eye {
     display: flex;
     position: fixed;
-    top: calc(var(--viewport-top) + var(--viewport-height) * 0.6);
-    height: calc(var(--viewport-height) * 0.4);
+    top: calc(var(--viewport-top) + var(--viewport-height) - var(--reader-window-height));
+    height: var(--reader-window-height);
     /* Keep the full candidate card visible when the keyboard reduces space. */
     font-size: clamp(8px, calc(var(--viewport-height) * 0.04), 16px);
     left: 0;
@@ -170,40 +175,130 @@ body {
 }
 
 #typewriter {
-    background: linear-gradient(#fffdf7, #f3f0e6);
-    border-bottom: 1px solid #d5cfbd;
+    background: var(--machine-background);
+    overflow: hidden;
+    /* Native caret scrolling must not compete with explicit paper panning. */
+    overflow: clip;
+    touch-action: none;
+    cursor: grab;
+    border-bottom: 0;
     box-shadow: 0 3px 16px #3740390d;
+}
+
+#paper-sheet {
+    --paper-writing-offset: 4px;
+    --paper-margin: 3em;
+    --paper-feed: 0px;
+    --paper-line-feed: 0px;
+    --paper-pan-x: 0px;
+    --paper-pan-y: 0px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(26em + 2px);
+    box-sizing: border-box;
+    /* Text, marker, writing guide and texture share the eyepiece's motion. */
+    transform: translate(
+        calc(var(--carriage-x, 75vw) - var(--paper-margin) - 1px - var(--paper-feed) + var(--paper-pan-x)),
+        calc(var(--paper-center-offset, 0px) - var(--paper-line-feed) + var(--paper-pan-y))
+    );
+    will-change: transform;
+}
+
+.paper-line::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.5em;
+    transform: translateY(var(--paper-writing-offset));
+    border-bottom: 1px dotted #7c775f;
+    pointer-events: none;
 }
 
 #text {
     box-sizing: border-box;
-    height: 100%;
+    width: 100%;
     margin: 0;
-    /* The right edge follows the printing point during each carriage step. */
-    --paper-offset: 0px;
-    --paper-left-inset: 12px;
-    padding-inline: var(--paper-left-inset) calc(25% - var(--paper-offset));
-    /* Keep the end of even an overflowing line at the printing point. */
-    display: flex;
-    justify-content: flex-end;
-    line-height: 3em;
-    /* Preserve blank characters, including trailing spaces, without wrapping. */
-    white-space: pre;
-    overflow: hidden;
-    overflow: clip;
-    clip-path: inset(0 0 0 var(--paper-left-inset));
+    padding: 0;
+    text-align: left;
+    line-height: 1.5em;
+    white-space: normal;
+    user-select: text;
+    -webkit-user-select: text;
     cursor: text;
     caret-color: transparent;
+    outline: none;
+    box-shadow: none;
+}
+
+.paper-page {
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--paper-page-height);
+    aspect-ratio: 2000 / 1333;
+    margin-bottom: 1.5em;
+    padding: var(--paper-page-inset) var(--paper-margin);
+    overflow: hidden;
+    background: #f3f0e6 url('assets/textures/wooden-floor-background.jpg') center / 100% 100% no-repeat;
+    background-origin: border-box;
+    border-inline: 1px solid #c3ac7d;
+    box-shadow: 0 0 8px #37403926;
+    cursor: grab;
+}
+
+.paper-page:last-child {
+    margin-bottom: 0;
+}
+
+.paper-line {
+    position: relative;
+    display: block;
+    width: 20em;
+    height: 1.5em;
+    white-space: nowrap;
+}
+
+.paper-glyph {
+    position: relative;
+    top: var(--paper-writing-offset);
+    display: inline-block;
+    width: 1em;
+    text-align: center;
+    white-space: pre;
+    line-height: 1;
+    vertical-align: top;
+    cursor: text;
+}
+
+@keyframes paper-ink-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.paper-ink-fade {
+    animation: paper-ink-fade 0.2s ease-out both;
+}
+
+#typewriter[data-paper-dragging] {
+    cursor: grabbing;
 }
 
 #printing-point {
     position: absolute;
-    --marker-offset: 0px;
-    left: 75%;
-    bottom: 3px;
-    transform: translateX(calc(-50% + var(--marker-offset)));
+    left: calc(var(--paper-margin) + 1px);
+    top: calc(1.5em - 12px);
+    transform: translate(-50%, var(--paper-writing-offset));
     display: flex;
     pointer-events: none;
+    z-index: 2;
+}
+
+#printing-point svg {
+    width: 21px;
+    height: 12px;
 }
 
 #keyboard-toggle {
@@ -229,6 +324,12 @@ body {
 
 #keyboard-toggle .keyboard-icon-case {
     fill: #fffdf7;
+    transition: fill 0.3s ease;
+}
+
+#keyboard-toggle svg path {
+    stroke: #293c37;
+    transition: stroke 0.3s ease;
 }
 
 #keyboard-toggle[aria-pressed="true"] .keyboard-icon-case {
@@ -246,9 +347,6 @@ body {
         justify-content: center;
     }
 
-    #text {
-        --paper-left-inset: 60px;
-    }
 }
 
 #animation canvas {
@@ -321,15 +419,14 @@ body {
 /* Keep the reader beside the mechanism while the mobile keyboard is visible. */
 .mobile-keyboard-open #animation,
 .mobile-keyboard-open #magic_eye {
-    top: calc(var(--viewport-top) + 4.5rem + 1px);
-    height: max(0px, calc(var(--viewport-height) - 4.5rem - 1px));
+    top: calc(var(--viewport-top) + var(--paper-window-height) + var(--divider-size));
+    height: max(0px, calc(var(--viewport-height) - var(--paper-window-height) - var(--divider-size)));
     transition: none;
 }
 
-.mobile-keyboard-open #animation { right: calc(100% / 3); }
+.mobile-keyboard-open #animation { right: auto; width: var(--machine-pane-width); }
 .mobile-keyboard-open #magic_eye {
-    left: calc(100% * 2 / 3);
-    border-left: 1px solid #b8b6a8;
+    left: calc(var(--machine-pane-width) + var(--divider-size));
 }
 
 .mobile-keyboard-open .reader-opacity-control {
@@ -516,6 +613,10 @@ em {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .paper-ink-fade {
+        animation: none;
+    }
+
     #typewriter,
     #animation,
     #magic_eye,
@@ -523,3 +624,43 @@ em {
         transition: none;
     }
 }
+
+/* The separators also support touch dragging and keyboard arrow adjustments. */
+.pane-divider {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: var(--divider-size);
+    z-index: 4;
+    background: #c7c3b5;
+    cursor: row-resize;
+    touch-action: none;
+    user-select: none;
+}
+.pane-divider::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 2px;
+    top: 2px;
+    left: calc(50% - 20px);
+    background: #807b6d;
+    border-radius: 2px;
+}
+.pane-divider::before { content: ''; position: absolute; inset: -4px 0; }
+.pane-divider:hover, .pane-divider:focus-visible { background: #adab97; outline: none; }
+#paper-divider { top: calc(var(--viewport-top) + var(--paper-window-height)); }
+#reader-divider { top: calc(var(--viewport-top) + var(--viewport-height) - var(--reader-window-height) - var(--divider-size)); }
+.mobile-keyboard-open #reader-divider {
+    top: calc(var(--viewport-top) + var(--paper-window-height) + var(--divider-size));
+    bottom: auto;
+    height: calc(var(--viewport-height) - var(--paper-window-height) - var(--divider-size));
+    left: var(--machine-pane-width);
+    right: auto;
+    width: var(--divider-size);
+    cursor: col-resize;
+}
+.mobile-keyboard-open #reader-divider::before { inset: 0 -4px; }
+.mobile-keyboard-open #reader-divider::after { width: 2px; height: 40px; left: 2px; top: calc(50% - 20px); }
+.resizing-panes, .resizing-panes * { user-select: none !important; cursor: inherit; }
+.resizing-panes #animation, .resizing-panes #magic_eye { transition: none; }

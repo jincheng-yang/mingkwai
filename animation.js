@@ -4,7 +4,7 @@
     const paper = document.getElementById('text');
     const { groupCount, rollersPerGroup, facesPerRoller, columnCount } = machineLayout;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(machineLayout.cameraFov, 1, 0.1, 1000);
     const compactDisplay = window.matchMedia('(any-pointer: coarse)').matches;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compactDisplay ? 1.5 : 2));
@@ -29,8 +29,7 @@
     const darkMetal = new THREE.MeshStandardMaterial({
         color: 0x374846, metalness: 0.4, roughness: 0.48
     });
-    const rollerRadius = 1;
-    const capRadius = 1.025;
+    const { rollerRadius, capRadius } = machineLayout;
     // Keep clearance between all six caps and between the rotating assemblies.
     const rollerOrbitRadius = (2 * capRadius + 0.1) / (2 * Math.sin(Math.PI / rollersPerGroup));
     const mediumOrbitRadius = (2 * (rollerOrbitRadius + capRadius) + 0.15) / (2 * Math.sin(Math.PI / groupCount));
@@ -924,7 +923,7 @@
             }
         }
         typeFont = font;
-        await detailSelectedRoller(row);
+        await detailSelectedRoller(window.machineState.targetVerticalPosition);
         requestRender();
         window.simulatorLoading?.ready('mechanism');
     }).catch(error => {
@@ -1091,9 +1090,9 @@
         updateResetView(performance.now());
         const delta = Math.min(clock.getDelta(), 0.05);
         const blend = !initialized || reducedMotion.matches ? 1 : 1 - Math.exp(-22 * delta);
-        const selection = currentMechanismSelection();
-        updateCardStack(selection.row);
-        updateCardReader(selection.column);
+        const selection = window.machineState.mechanismSelection;
+        const row = window.machineState.targetVerticalPosition;
+        const ind = window.machineState.strikeFace;
         if (Math.abs(selection.row - row) < 0.001) {
             detailSelectedRoller(row).catch(error => console.error('Unable to refine roller lettering:', error));
         }
@@ -1113,8 +1112,6 @@
             const target = -roller.userData.assemblyAngle + faceAngle;
             roller.rotation.x = THREE.MathUtils.lerp(roller.rotation.x, target, blend);
         });
-        const column = selection.column;
-        carriage.position.x = THREE.MathUtils.lerp(carriage.position.x, -9.75 + (column + 0.5) * 19.5 / columnCount, blend);
         initialized = true;
         scene.updateMatrixWorld(true);
         camera.updateMatrixWorld();
@@ -1122,6 +1119,11 @@
         renderer.render(scene, camera);
         if (performance.now() < renderUntil) requestRender();
     }
+    window.machineState.subscribeHorizontalPosition(() => {
+        carriage.position.x = window.machineState.carriageX;
+        requestRender();
+    });
+    window.machineState.subscribeVerticalPosition(() => requestRender(400));
     requestRender();
     document.addEventListener('visibilitychange', () => {
         clock.getDelta();

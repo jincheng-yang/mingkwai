@@ -1,42 +1,11 @@
-// Shared by the candidate selector and the mechanical animation.
-const machineLayout = Object.freeze({
-    groupCount: 6,
-    rollersPerGroup: 6,
-    facesPerRoller: 8,
-    columnCount: 28,
-    rowKeys: 'GFDSA!HJKLM@TREWQ#YUIOP$NBVCX%^&*()Z',
-    columnKeys: window.simulatorLoading.scheme.columnKeys || 'qazwsxedcrfvtgbyhnujmik9ol0p'
-});
-
+// Card artwork and reader viewport; selection comes from machineState.
 const magicEye = document.getElementById('magic_eye');
 const candidateTable = document.getElementById('table');
 let rect = magicEye.getBoundingClientRect();
 let rect2 = { width: 66, height: 114 };
 let spacing = [32, 32];
-let blocks = [];
 
-// These values also drive the mechanical animation.
-var row = machineLayout.rowKeys.indexOf(window.simulatorLoading.scheme.initialRow);
-var col = machineLayout.columnKeys.indexOf(window.simulatorLoading.scheme.initialColumn);
-var largeFrom = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount;
-var largeTo = largeFrom;
-var mediumFrom = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
-var mediumTo = mediumFrom;
-var centerGearFrom = -mediumFrom / 2;
-var centerGearTo = centerGearFrom;
-var ind = -1;
-
-const sound_keydown = new Audio('assets/audio/keydown.mp3');
-const sound_keyup = new Audio('assets/audio/keyup.mp3');
-const sound_swoosh = new Audio('assets/audio/swoosh.mp3');
-sound_swoosh.volume = 0.1;
-const sound_gear = Array.from({ length: 4 }, (_, index) => new Audio(`assets/audio/gear${index + 1}.mp3`));
 const reducedEyeMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-let activeStrikeKey = null;
-let rowMoveStartedAt = -1000;
-let columnMoveStartedAt = -1000;
-let rowFrom = row;
-let columnFrom = col;
 let cardLayers = [];
 let cardRasterCache = null;
 let cardOffsets = [];
@@ -48,6 +17,7 @@ let cardStackMotion = null;
 let mobileKeyboardOpen = false;
 let lastReaderColumn = null;
 let readerViewport = null;
+let readerBackgroundOffset = 0;
 const readerSlitPadding = 4;
 const readerOpacityControl = document.getElementById('reader-opacity');
 const readerOpacityValue = document.getElementById('reader-opacity-value');
@@ -87,37 +57,8 @@ function restoreReaderOpacityFocus(event) {
 window.addEventListener('pointerup', restoreReaderOpacityFocus);
 window.addEventListener('pointercancel', restoreReaderOpacityFocus);
 
-// The mechanical animation follows selection state, independent of the reader UI.
-function clockwiseTargetAngle(angle, current) {
-    const turn = Math.PI * 2;
-    // Positive x-axis rotation is clockwise when viewed from the left (-x).
-    // Keep complete turns so returning to an earlier group never reverses.
-    const turns = Math.ceil((current - angle) / turn - 1e-10);
-    return Math.max(current, angle + turns * turn);
-}
-
-function currentMechanismSelection(now = performance.now()) {
-    const progress = startedAt => reducedEyeMotion.matches ? 1
-        : d3.easeCubicInOut(Math.max(0, Math.min(1, (now - startedAt) / 1000)));
-    const rowProgress = progress(rowMoveStartedAt);
-    const columnProgress = progress(columnMoveStartedAt);
-    return {
-        // The former vertical table position, expressed in row spacings.
-        row: rowFrom + (row - rowFrom) * rowProgress,
-        large: largeFrom + (largeTo - largeFrom) * rowProgress,
-        medium: mediumFrom + (mediumTo - mediumFrom) * rowProgress,
-        centerGear: centerGearFrom + (centerGearTo - centerGearFrom) * rowProgress,
-        column: columnFrom + (col - columnFrom) * columnProgress
-    };
-}
-
-function playSound(sound) {
-    // Audio availability must not prevent selection or typing.
-    sound.play().catch(() => {});
-}
-
 function selectedCell() {
-    return candidateTable?.rows[row]?.cells[col];
+    return candidateTable?.rows[window.machineState.targetVerticalPosition]?.cells[window.machineState.targetHorizontalPosition];
 }
 
 function selectedPosition() {
@@ -183,26 +124,35 @@ function layoutCardReader() {
     if (!bounds.width || !bounds.height) return;
     const { width, height, selectionShift } = window.MingKwaiCards;
     const cardWidth = width - selectionShift;
-    // Reserve a left gutter for the slider while the cover reaches every edge.
-    const leftInset = readerOpacityControl ? 64 : 16;
-    const rightInset = 16;
+    // Fit the artwork to the available height, allowing horizontal cropping.
+    // The opacity control is outside the usable slit travel on every device.
+    let leftInset = 16, rightInset = 16, topInset = 12, bottomInset = 12;
+    const control = document.querySelector('.reader-opacity-control')?.getBoundingClientRect();
+    if (control) {
+        if (control.width > control.height) bottomInset = Math.max(bottomInset, bounds.bottom - control.top + 8);
+        else leftInset = Math.max(leftInset, control.right - bounds.left + 12);
+    }
     const aperture = readerApertureAt(0);
-    // In the narrow keyboard pane, fit the candidates rather than the whole card.
-    const scale = mobileKeyboardOpen
-        ? Math.min(Math.max(1, bounds.width - 16) / 110, Math.max(1, bounds.height - 80) / aperture.height)
-        : Math.min(Math.max(1, bounds.width - leftInset - rightInset) / cardWidth, Math.max(1, bounds.height - 24) / height);
+    const availableHeight = Math.max(1, bounds.height - topInset - bottomInset);
+    const scale = availableHeight / (mobileKeyboardOpen ? aperture.height : height);
     const viewWidth = bounds.width / scale;
     const viewHeight = bounds.height / scale;
+    const centerY = mobileKeyboardOpen ? aperture.y + aperture.height / 2 : height / 2;
     const viewport = {
-        x: mobileKeyboardOpen ? aperture.x + aperture.width / 2 - viewWidth / 2
-            : selectionShift + (cardWidth - viewWidth) / 2 - (leftInset - rightInset) / (2 * scale),
-        y: mobileKeyboardOpen ? aperture.y + aperture.height / 2 - viewHeight / 2 : (height - viewHeight) / 2,
+        x: selectionShift + (cardWidth - viewWidth) / 2 - (leftInset - rightInset) / (2 * scale),
+        y: centerY - (topInset + availableHeight / 2) / scale,
         width: viewWidth, height: viewHeight
     };
+    const guard = Math.min(12, Math.max(0, (bounds.width - leftInset - rightInset) / 4));
+    viewport.slitMin = viewport.x + (leftInset + guard) / scale + aperture.width / 2;
+    viewport.slitMax = viewport.x + (bounds.width - rightInset - guard) / scale - aperture.width / 2;
+    if (viewport.slitMin > viewport.slitMax) {
+        viewport.slitMin = viewport.slitMax = viewport.x + (leftInset + bounds.width - rightInset) / (2 * scale);
+    }
     document.getElementById('card-stack-art').setAttribute('viewBox', `${viewport.x} ${viewport.y} ${viewWidth} ${viewHeight}`);
     readerViewport = viewport;
     layoutReaderCover();
-    positionCardReader(lastReaderColumn ?? currentMechanismSelection().column);
+    positionCardReader(lastReaderColumn ?? window.machineState.mechanismSelection.column);
     if (cardRasterCache) {
         const rasterScale = scale * (window.devicePixelRatio || 1);
         const rasterizing = Promise.all([
@@ -223,7 +173,7 @@ function layoutReaderCover() {
     const { slitAt, roundedRectPath } = window.MingKwaiCards;
     const travel = slitAt(machineLayout.columnCount - 1).x - slitAt(0).x;
     // Overscan covers every viewport edge throughout the full column travel.
-    const margin = travel + 1;
+    const margin = travel + width + 1;
     const opening = roundedRectPath(readerApertureAt(0));
     const coveredPath = `M${x - margin} ${y - 1} h${width + 2 * margin} v${height + 2} h${-width - 2 * margin} Z ${opening}`;
     readerCover.setAttribute('d', coveredPath);
@@ -258,8 +208,9 @@ async function renderCardStack(data) {
     readerMotion.append(readerCover, readerMarkerCache.image);
     stack.replaceChildren(layers, readerMotion);
     lastReaderColumn = null;
+    readerBackgroundOffset = 0;
     await layoutCardReader();
-    const selection = currentMechanismSelection();
+    const selection = window.machineState.mechanismSelection;
     updateCardStack(selection.row);
     updateCardReader(selection.column);
 }
@@ -274,8 +225,14 @@ function positionCardReader(animatedColumn) {
     if (!readerMotion || !cardStackMotion) return;
     const { slitAt } = window.MingKwaiCards;
     const offset = slitAt(animatedColumn).x - slitAt(0).x;
-    const coverTransform = `translate(${mobileKeyboardOpen ? 0 : offset} 0)`;
-    const cardsTransform = `translate(${mobileKeyboardOpen ? -offset : 0} 0)`;
+    const aperture = readerApertureAt(0);
+    const center = aperture.x + aperture.width / 2;
+    const desired = center + offset + readerBackgroundOffset;
+    const clamped = Math.max(readerViewport.slitMin, Math.min(readerViewport.slitMax, desired));
+    // Preserve the current card offset until the slit reaches a safe boundary.
+    readerBackgroundOffset += clamped - desired;
+    const coverTransform = `translate(${offset + readerBackgroundOffset} 0)`;
+    const cardsTransform = `translate(${readerBackgroundOffset} 0)`;
     if (readerMotion.getAttribute('transform') !== coverTransform) readerMotion.setAttribute('transform', coverTransform);
     if (cardStackMotion.getAttribute('transform') !== cardsTransform) cardStackMotion.setAttribute('transform', cardsTransform);
 }
@@ -297,10 +254,7 @@ function updateCardStack(animatedRow) {
     });
 }
 
-window.simulatorLoading.loadText(window.simulatorLoading.scheme.candidatesUrl, 'candidateDownload',
-    window.simulatorLoading.scheme.candidatesBytes).then(async source => {
-    const data = d3.csvParse(source);
-    blocks = data;
+window.keyboardController.ready.then(async data => {
     if (!candidateTable) {
         await renderCardStack(data);
         window.simulatorLoading?.ready('candidates');
@@ -344,257 +298,15 @@ window.simulatorLoading.loadText(window.simulatorLoading.scheme.candidatesUrl, '
     window.simulatorLoading?.fail(error);
 });
 
-const typingSurface = document.getElementById('text');
-const printingPoint = document.getElementById('printing-point');
-const keyboardToggle = document.getElementById('keyboard-toggle');
-let typedText = typingSurface.textContent;
-let activeStrikeIsMobile = false;
-const mobileKeys = [];
-let mobileTyping = false;
-const strikeDuration = 300;
-let strikeStartedAt = 0;
-let strikeReleaseTimer = null;
-let composing = false;
-const touchKeyboard = window.matchMedia('(any-pointer: coarse)');
-
-function typeKey(key, mobile = false) {
-    const newRow = machineLayout.rowKeys.indexOf(key);
-    const newCol = machineLayout.columnKeys.indexOf(key);
-    const choice = '12345678 '.indexOf(key);
-    if (key.length !== 1 || (newRow === -1 && newCol === -1 && choice === -1)) return;
-
-    if (newRow !== -1 && newRow !== row) {
-        const middleDiff = Math.abs(newRow % machineLayout.rollersPerGroup - row % machineLayout.rollersPerGroup);
-        const largeDiff = Math.abs(Math.floor(newRow / machineLayout.rollersPerGroup) - Math.floor(row / machineLayout.rollersPerGroup));
-        const gearSteps = Math.max(middleDiff, largeDiff);
-        playSound(sound_gear[Math.min(gearSteps, sound_gear.length) - 1]);
-        const now = performance.now();
-        const current = currentMechanismSelection(now);
-        rowFrom = current.row;
-        largeFrom = current.large;
-        mediumFrom = current.medium;
-        centerGearFrom = current.centerGear;
-        rowMoveStartedAt = now;
-        row = newRow;
-        largeTo = clockwiseTargetAngle(
-            Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount,
-            largeFrom);
-        mediumTo = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
-        // The center cam keeps turning counterclockwise, using the return
-        // sector instead of reversing when an earlier stair is selected.
-        centerGearTo = -clockwiseTargetAngle(mediumTo / 2, -centerGearFrom);
-        const position = selectedPosition();
-        if (position) {
-            d3.select(candidateTable).interrupt('row').transition('row')
-                .duration(reducedEyeMotion.matches ? 0 : 1000).style('top', `${position.top}px`);
-        }
-        window.requestMechanismRender?.(1600);
-    }
-    if (newCol !== -1 && newCol !== col) {
-        const distance = Math.abs(newCol - col);
-        sound_swoosh.playbackRate = 1 / Math.min(2, 1 + distance / 10);
-        sound_swoosh.preservesPitch = true;
-        sound_swoosh.currentTime = 0;
-        playSound(sound_swoosh);
-        const now = performance.now();
-        columnFrom = currentMechanismSelection(now).column;
-        columnMoveStartedAt = now;
-        col = newCol;
-        const position = selectedPosition();
-        if (position) {
-            // Independent transitions allow the two-letter code to be typed quickly.
-            d3.select(candidateTable).interrupt('column').transition('column')
-                .duration(reducedEyeMotion.matches ? 0 : 1000).style('left', `${position.left}px`);
-        }
-        window.requestMechanismRender?.(1600);
-    }
-    if (choice !== -1) {
-        const block = blocks[row * machineLayout.columnCount + col];
-        if (!block && choice !== 8) return;
-        releaseStrike();
-        ind = choice;
-        activeStrikeKey = key;
-        activeStrikeIsMobile = mobile;
-        strikeStartedAt = performance.now();
-        playSound(sound_keydown);
-        const character = choice === 8 ? '　' : Array.from(block.chars)[choice] || '　';
-        typedText += character;
-        typingSurface.textContent = typedText;
-        const range = document.createRange();
-        range.setStart(typingSurface.firstChild, typedText.length - character.length);
-        range.setEnd(typingSurface.firstChild, typedText.length);
-        const advance = range.getBoundingClientRect().width || parseFloat(getComputedStyle(typingSurface).fontSize);
-        // Compensate immediately for the appended glyph, keeping the previous
-        // text in place until release advances the paper by one glyph.
-        d3.select(typingSurface).interrupt()
-            .style('--paper-offset', `${advance}px`)
-            .transition().duration(reducedEyeMotion.matches ? 0 : strikeDuration)
-            .style('--strike-progress', choice === 8 ? '0' : '1');
-        d3.select(printingPoint).interrupt().transition()
-            .duration(reducedEyeMotion.matches ? 0 : strikeDuration)
-            .style('--marker-offset', `${advance}px`);
-        window.requestMechanismRender?.(700);
-    }
-}
-
-document.addEventListener('keydown', event => {
-    if (window.simulatorLoading?.active) return;
-    if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
-    const editable = event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]');
-    if (editable && editable !== typingSurface) return;
-    // Some software keyboards report physical-looking codes and immediately
-    // send keyup. On touch devices, use committed input and a timed strike.
-    if (editable && (touchKeyboard.matches || !event.code || event.keyCode === 229)) return;
-    if (event.key.length !== 1 || !(machineLayout.rowKeys + machineLayout.columnKeys + '12345678 ').includes(event.key)) return;
-    event.preventDefault();
-    if (event.repeat) return;
-    typeKey(event.key);
+window.keyboardController.onKeyboardChange(open => {
+    mobileKeyboardOpen = open;
+    layoutCardReader();
 });
-
-function typeMobileText(text) {
-    typingSurface.textContent = typedText;
-    mobileKeys.push(...text || '');
-    if (!mobileTyping) runMobileKeys();
-}
-
-function runMobileKeys() {
-    mobileTyping = true;
-    while (mobileKeys.length) {
-        typeKey(mobileKeys.shift(), true);
-        if (activeStrikeKey !== null && activeStrikeIsMobile) {
-            const strikeKey = activeStrikeKey;
-            setTimeout(() => {
-                if (activeStrikeIsMobile && activeStrikeKey === strikeKey) releaseStrike();
-                setTimeout(runMobileKeys, strikeDuration);
-            }, strikeDuration);
-            return;
-        }
-    }
-    mobileTyping = false;
-}
-
-typingSurface.addEventListener('beforeinput', event => {
-    if (composing || event.isComposing || !event.cancelable) return;
-    const insertion = event.inputType.startsWith('insert') && !['insertParagraph', 'insertLineBreak'].includes(event.inputType);
-    // Let the browser supply the edit when beforeinput has no text payload.
-    // The input fallback will extract it from the edited surface.
-    if (insertion && event.data == null) return;
-    event.preventDefault();
-    if (insertion) typeMobileText(event.data);
+window.machineState.subscribeHorizontalPosition(position => {
+    updateCardReader(position);
+    if (candidateTable) layoutMagicEye();
 });
-
-function insertedSurfaceText() {
-    const edited = typingSurface.textContent;
-    let start = 0;
-    while (start < typedText.length && start < edited.length && typedText[start] === edited[start]) start++;
-    let oldEnd = typedText.length;
-    let newEnd = edited.length;
-    while (oldEnd > start && newEnd > start && typedText[oldEnd - 1] === edited[newEnd - 1]) {
-        oldEnd--;
-        newEnd--;
-    }
-    return edited.slice(start, newEnd);
-}
-
-typingSurface.addEventListener('input', event => {
-    if (composing || event.isComposing || typingSurface.textContent === typedText) return;
-    // Restore the output when a keyboard delivers a noncancelable edit.
-    const insertion = event.inputType?.startsWith('insert');
-    typeMobileText(insertion ? event.data ?? insertedSurfaceText() : '');
+window.machineState.subscribeVerticalPosition(position => {
+    updateCardStack(position);
+    if (candidateTable) layoutMagicEye();
 });
-typingSurface.addEventListener('compositionstart', () => { composing = true; });
-typingSurface.addEventListener('compositionend', event => {
-    composing = false;
-    typeMobileText(event.data ?? insertedSurfaceText());
-});
-
-function updateKeyboardToggle() {
-    const focused = document.activeElement === typingSurface;
-    keyboardToggle.setAttribute('aria-pressed', String(focused));
-    keyboardToggle.setAttribute('aria-label', focused ? '隐藏键盘' : '显示键盘');
-}
-
-// Preserve the surface's focus until click so a second tap can dismiss it.
-keyboardToggle.addEventListener('pointerdown', event => event.preventDefault());
-keyboardToggle.addEventListener('click', () => {
-    if (document.activeElement === typingSurface) typingSurface.blur();
-    else typingSurface.focus({ preventScroll: true });
-});
-typingSurface.addEventListener('focus', updateKeyboardToggle);
-typingSurface.addEventListener('blur', () => {
-    releaseStrike();
-    updateKeyboardToggle();
-});
-
-function releaseStrike() {
-    if (strikeReleaseTimer !== null) {
-        clearTimeout(strikeReleaseTimer);
-        strikeReleaseTimer = null;
-    }
-    if (activeStrikeKey === null) return;
-    activeStrikeKey = null;
-    activeStrikeIsMobile = false;
-    playSound(sound_keyup);
-    d3.select(typingSurface).interrupt().transition()
-        .duration(reducedEyeMotion.matches ? 0 : strikeDuration)
-        .style('--strike-progress', '0').style('--paper-offset', '0px');
-    d3.select(printingPoint).interrupt().transition()
-        .duration(reducedEyeMotion.matches ? 0 : strikeDuration)
-        .style('--marker-offset', '0px');
-    window.requestMechanismRender?.(700);
-}
-document.addEventListener('keyup', event => {
-    if (activeStrikeIsMobile || event.key !== activeStrikeKey) return;
-    const remaining = strikeDuration - (performance.now() - strikeStartedAt);
-    if (remaining <= 0) releaseStrike();
-    else if (strikeReleaseTimer === null) {
-        strikeReleaseTimer = setTimeout(releaseStrike, remaining);
-    }
-});
-window.addEventListener('blur', releaseStrike);
-
-let keyboardClosedHeight = 0;
-let keyboardClosedWidth = 0;
-
-function resizeVisibleViewport() {
-    const viewport = window.visualViewport;
-    const visibleHeight = viewport ? viewport.height : window.innerHeight;
-    // Normalize pinch zoom so zooming alone does not look like a keyboard.
-    const normalizedHeight = visibleHeight * (viewport?.scale || 1);
-    const layoutWidth = document.documentElement.clientWidth;
-    const focused = document.activeElement === typingSurface;
-    if (!keyboardClosedHeight || Math.abs(layoutWidth - keyboardClosedWidth) > 50) {
-        // Rotation may occur while the keyboard is already open.
-        keyboardClosedHeight = mobileKeyboardOpen && focused
-            ? Math.max(normalizedHeight, window.screen.availHeight) : normalizedHeight;
-        keyboardClosedWidth = layoutWidth;
-    } else if (!focused || !mobileKeyboardOpen) {
-        keyboardClosedHeight = Math.max(keyboardClosedHeight, normalizedHeight);
-    }
-    const threshold = Math.max(100, keyboardClosedHeight * 0.18);
-    const keyboardOpen = touchKeyboard.matches && focused && (
-        (navigator.virtualKeyboard?.boundingRect.height || 0) > 0
-        || keyboardClosedHeight - normalizedHeight > threshold
-    );
-    document.documentElement.style.setProperty('--viewport-height', `${visibleHeight}px`);
-    document.documentElement.style.setProperty('--viewport-top', `${viewport ? viewport.offsetTop : 0}px`);
-    if (keyboardOpen !== mobileKeyboardOpen) {
-        mobileKeyboardOpen = keyboardOpen;
-        document.documentElement.classList.toggle('mobile-keyboard-open', keyboardOpen);
-        layoutCardReader();
-        window.requestMechanismRender?.(1600);
-    }
-}
-
-// Mobile keyboards often resize only the visual viewport, not the layout
-// viewport. Keep both the mechanism and magic eye inside the visible area.
-window.visualViewport?.addEventListener('resize', resizeVisibleViewport);
-window.visualViewport?.addEventListener('scroll', resizeVisibleViewport);
-window.addEventListener('resize', resizeVisibleViewport);
-typingSurface.addEventListener('focus', resizeVisibleViewport);
-typingSurface.addEventListener('blur', resizeVisibleViewport);
-touchKeyboard.addEventListener('change', resizeVisibleViewport);
-navigator.virtualKeyboard?.addEventListener('geometrychange', resizeVisibleViewport);
-resizeVisibleViewport();
-
-// The instruction screen focuses the typing surface when the user starts.

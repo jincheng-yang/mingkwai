@@ -21,7 +21,7 @@ https://jincheng-yang.github.io/mingkwai/
 
 虽然其专利文件被完整保留，但目前还未有人能够复刻。近日，唯一的原型机疑似被发现，为重制带来新的希望。
 
-本网页用于模拟魔术眼的工作原理。为降低学习曲线，使用[五笔字型输入法](https://zh.wikipedia.org/wiki/五笔字型输入法#新世纪版)来实现检字。
+本网页用于模拟三级滚筒与魔术眼的工作原理。为降低学习曲线，可使用[五笔字型输入法](https://zh.wikipedia.org/wiki/五笔字型输入法)或[双拼输入法](https://zh.wikipedia.org/wiki/双拼)来实现检字。
 
 本模拟器支持新世纪、86版和98版五笔，以及小鹤、微软和智能ABC双拼，可在加载画面选择。希望此模拟器能够在明快打字机重制之后，为上下形检字法提供大家习惯的替代检字法。
 
@@ -48,7 +48,7 @@ https://jincheng-yang.github.io/mingkwai/
 |机|Sw1|
 
 
-**特殊情形**
+**五笔特殊情形**
 
 * 如果字的简码只有一个字母（如`我`的简码是`q`）则第二个字母使用同一个选项（`我`的代码是`Qq1`）。
 
@@ -57,6 +57,40 @@ https://jincheng-yang.github.io/mingkwai/
 * 有一定机率以某两个字母开头的五笔简码包含不只8个常用汉字。如果魔术眼的8个字不含想输入的字，需要**翻页**。
 * `翻页代码`写在魔术眼8个候选字的下方。如若还没有想要的字就需要继续翻页。
 * 借住的字用红色字体表示。
+
+## 前端结构
+
+`loading.js` 依次加载 `machine-state.js`、`paper.js`、`keyboard.js`、`layout.js`、`magic_eye.js` 和 `animation.js`。
+
+| 文件 | 职责 |
+|---|---|
+| `machine-state.js` | 共享布局、水平选字列（0–27）和垂直选字卡（0–35），以及缓动、齿轮角度和订阅通知。 |
+| `keyboard.js` | 桌面和手机输入、选字键、候选字表；更新共享选择，并向纸面发送汉字、空格和回车。 |
+| `layout.js` | 可拖动的分隔线、键盘微调和复位；默认纸面视窗为 1.5 倍行距，当前行垂直居中。 |
+| `paper.js` | 每行 20 字的纸面、印字和回车音效、选择、拖动和复位；满行停留 1 秒后自动回车。 |
+| `magic_eye.js` | 订阅选择来显示字卡和移动竖缝；按高度缩放，接近有效边界时移动字卡，避开不透明度滑块。 |
+| `animation.js` | 三维机械、齿轮联动及视角；订阅共享位置来移动目镜，不直接修改纸面。 |
+
+纸面按背景图的 2000×1333 比例保持固定页高，每页 9 行、每行 20 字，上下留相等的页边距。
+写满后自动开始下一页，旧页保留在上方，两页之间留一行行距。
+默认只显示当前一行；拖动文字可以选择，拖动空白处可以平移，首次进入不自动聚焦纸面。
+任何按键或印字都会立即复位纸面拖动。新字用 200 毫秒淡入，与印字并行；
+自动回车的音效、移动和换页统一延迟 1 秒，其间输入按顺序缓冲；手动 Enter 直接回车，已有缓冲输入时保持顺序。
+
+三个界面模块独立订阅 `window.machineState.horizontalPosition`（当前动画位置，可为小数）。
+魔术眼和机械还订阅 `verticalPosition` 来选择字卡和滚筒；它与纸面行号完全独立。
+`targetHorizontalPosition` 和 `targetVerticalPosition` 是目标列与卡，`carriageX` 是机械横坐标。
+纸面使用默认视角投影，不受机械缩放或旋转影响。
+
+```js
+machineState.setHorizontalPosition(12); // 移到第 13 列，保留缓动
+machineState.setHorizontalPosition(0, { immediate: true }); // 立即回到第 1 列
+machineState.setVerticalPosition(6); // 选择第 7 张字卡及对应滚筒，不改变纸面行号
+const unsubscribe = machineState.subscribeHorizontalPosition(position => {
+    console.log(position);
+});
+unsubscribe();
+```
 
 ## 开发数据
 
@@ -98,3 +132,5 @@ Notebook 保留当前每字取第一条编码的规则，生成 `<mode>.csv` 字
 11. 微软双拼：[Rime 微软双拼键位定义](https://github.com/rime/rime-double-pinyin/blob/master/double_pinyin_mspy.schema.yaml)。
 12. 智能ABC双拼：[Rime 智能ABC双拼键位定义](https://github.com/rime/rime-double-pinyin/blob/master/double_pinyin_abc.schema.yaml)。
 13. 缺失拼音补充：[pypinyin](https://github.com/mozillazg/python-pinyin)，用于为字频表未提供有效读音的汉字补充拼音。
+
+齿轮音效按左侧载轮与右侧中心齿轮实际转角的最大值选择：每 60° 一档，使用 gear1–gear4，超过 240° 使用 gear4；单向绕回和中途改选均按实际剩余转角计算。

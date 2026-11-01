@@ -38,11 +38,10 @@
             <p id="loading-description">用五笔前两码选字，再按数字键印下汉字。</p>
             <ol class="loading-instructions">
                 <li>请切换到英文键盘。程序会区分大小写。</li>
-                <li>第一码用<strong>大写字母</strong>选择滚筒，第二码用<strong>小写字母或方案符号</strong>选择字模组。</li>
-                <li>字卡中候选字从上到下对应
-                    <span class="loading-choice-keys"><kbd class="choice-key">1</kbd>–<kbd class="choice-key">8</kbd></span>，最下方为翻页提示。空格键留白。</li>
+                <li>第一码用<strong>大写字母</strong>选择滚筒，第二码用<strong>小写字母</strong>选择字模组。</li>
+                <li>若字卡没有需要的字，可按下方提示翻页寻找红色借位字。</li>
+                <li>使用<span class="loading-choice-keys"><kbd class="choice-key">1</kbd>–<kbd class="choice-key">8</kbd></span>输入汉字。空格键留白。</li>
                 <li>试着输入 <kbd id="loading-example-row">J</kbd> <kbd id="loading-example-column">e</kbd> <kbd class="choice-key">1</kbd>，打出「明」。</li>
-                <li>若字卡没有需要的字，可按字卡上的提示继续翻页，寻找红色借位字。</li>
                 <li>可拖动、缩放查看机械，双击恢复视角。</li>
             </ol>
             <p class="loading-tip">手机进入后，轻触上方纸面或键盘图标即可输入。</p>
@@ -54,13 +53,14 @@
             </button>
         </dialog>
         
-        <div id="typewriter">
+        <div id="typewriter" title="拖动空白纸面平移；拖动或长按文字选择；双击空白处或按键回到输入位置">
             <button id="keyboard-toggle" type="button" aria-label="显示键盘" aria-controls="text" aria-pressed="false">
                 <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <rect class="keyboard-icon-case" x="2" y="5" width="20" height="14" rx="2" />
                     <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10" />
                 </svg>
             </button>
+            <div id="paper-sheet">
             <span id="printing-point" aria-hidden="true">
                 <svg width="28" height="16" viewBox="0 0 28 16">
                     <defs>
@@ -75,7 +75,9 @@
                 </svg>
             </span>
             <p id="text" lang="en" contenteditable="true" role="textbox" aria-label="打字机输入" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false"></p>
+            </div>
         </div>
+        <div id="paper-divider" class="pane-divider" role="separator" tabindex="0" aria-label="调整纸面高度" aria-orientation="horizontal" aria-controls="typewriter animation"></div>
         <div id="animation">
         </div>
         <!-- Previous moving-table magic eye:
@@ -84,6 +86,7 @@
             <table id="table" aria-label="魔术眼候选字"></table>
         </div>
         -->
+        <div id="reader-divider" class="pane-divider" role="separator" tabindex="0" aria-label="调整机械与魔术眼大小" aria-orientation="horizontal" aria-controls="animation magic_eye"></div>
         <div id="magic_eye" class="card-stack">
             <svg id="card-stack-art" xmlns="http://www.w3.org/2000/svg" viewBox="-31 0 1863 478"
                 role="img" aria-label="魔术眼：36 张叠放字卡，字面底色不透明度 50%；上覆默认不透明度 80% 的遮罩，单道清晰竖缝随选字列移动" preserveAspectRatio="xMidYMid meet"></svg>
