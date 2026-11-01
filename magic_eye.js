@@ -86,6 +86,14 @@ window.addEventListener('pointerup', restoreReaderOpacityFocus);
 window.addEventListener('pointercancel', restoreReaderOpacityFocus);
 
 // The mechanical animation follows selection state, independent of the reader UI.
+function clockwiseTargetAngle(angle, current) {
+    const turn = Math.PI * 2;
+    // Positive x-axis rotation is clockwise when viewed from the left (-x).
+    // Keep complete turns so returning to an earlier group never reverses.
+    const turns = Math.ceil((current - angle) / turn - 1e-10);
+    return Math.max(current, angle + turns * turn);
+}
+
 function currentMechanismSelection(now = performance.now()) {
     const progress = startedAt => reducedEyeMotion.matches ? 1
         : d3.easeCubicInOut(Math.max(0, Math.min(1, (now - startedAt) / 1000)));
@@ -364,7 +372,9 @@ function typeKey(key, mobile = false) {
         mediumFrom = current.medium;
         rowMoveStartedAt = now;
         row = newRow;
-        largeTo = Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount;
+        largeTo = clockwiseTargetAngle(
+            Math.PI * 2 * Math.floor(row / machineLayout.rollersPerGroup) / machineLayout.groupCount,
+            largeFrom);
         mediumTo = Math.PI * 2 * (row % machineLayout.rollersPerGroup) / machineLayout.rollersPerGroup;
         const position = selectedPosition();
         if (position) {
