@@ -22,26 +22,27 @@
 
 	<body>
         <dialog id="loading-screen" aria-labelledby="loading-title" aria-describedby="loading-status">
-            <p id="loading-caption" class="loading-caption">明快 · 新世纪五笔</p>
+            <p id="loading-caption" class="loading-caption">明快 · 拼音</p>
             <h1 id="loading-title">明快打字机模拟器</h1>
             <div class="loading-scheme-control">
                 <label for="input-scheme">输入方案</label>
                 <select id="input-scheme">
-                    <option value="wubi-06">新世纪五笔（wubi-06）</option>
-                    <option value="wubi-86">86版五笔（wubi-86）</option>
-                    <option value="wubi-98">98版五笔（wubi-98）</option>
+                    <option value="pinyin">拼音（pinyin）</option>
                     <option value="shuangpin-xiaohe">小鹤双拼（shuangpin xiaohe）</option>
                     <option value="shuangpin-microsoft">微软双拼（shuangpin microsoft）</option>
                     <option value="shuangpin-abc">智能ABC双拼（shuangpin abc）</option>
+                    <option value="wubi-86">86版五笔（wubi-86）</option>
+                    <option value="wubi-98">98版五笔（wubi-98）</option>
+                    <option value="wubi-06">新世纪五笔（wubi-06）</option>
                 </select>
             </div>
-            <p id="loading-description">用五笔前两码选字，再按数字键印下汉字。</p>
+            <p id="loading-description">使用全拼输入。数字键印字，按字卡提示翻页。</p>
             <ol class="loading-instructions">
                 <li>请切换到英文键盘。程序会区分大小写。</li>
-                <li>第一码用<strong>大写字母</strong>选择滚筒，第二码用<strong>小写字母</strong>选择字模组。</li>
+                <li id="loading-key-instructions">第一码用<strong>大写字母</strong>选择滚筒，第二码用<strong>小写字母</strong>选择字模组。</li>
                 <li>若字卡没有需要的字，可按下方提示翻页寻找红色借位字。</li>
                 <li>使用<span class="loading-choice-keys"><kbd class="choice-key">1</kbd>–<kbd class="choice-key">8</kbd></span>输入汉字。空格键留白。</li>
-                <li>试着输入 <kbd id="loading-example-row">J</kbd> <kbd id="loading-example-column">e</kbd> <kbd class="choice-key">1</kbd>，打出「明」。</li>
+                <li>试着输入 <kbd id="loading-example-row">M</kbd> <span id="loading-example-column"><kbd>i</kbd> <kbd>n</kbd> <kbd>g</kbd></span> <kbd class="choice-key">1</kbd>，打出「明」。</li>
                 <li>可拖动、缩放查看机械，双击恢复视角。</li>
             </ol>
             <p class="loading-tip">手机进入后，轻触上方纸面或键盘图标即可输入。</p>

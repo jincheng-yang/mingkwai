@@ -3,6 +3,7 @@
     'use strict';
     const paper = window.typewriterPaper;
     const state = window.machineState;
+    const pinyin = window.simulatorLoading.scheme.id === 'pinyin' ? window.createPinyinParser() : null;
     const typingSurface = paper.surface;
     const keyboardToggle = document.getElementById('keyboard-toggle');
     const touchKeyboard = window.matchMedia('(any-pointer: coarse)');
@@ -31,10 +32,18 @@
     function typeKey(key, mobile = false) {
         paper.resetPan({ immediate: true });
         if (key === 'Enter' || key === '\n') { carriageReturn(); return; }
-        const newRow = machineLayout.rowKeys.indexOf(key);
-        const newCol = machineLayout.columnKeys.indexOf(key);
+        if (key.length !== 1) return;
         const choice = '12345678 '.indexOf(key);
-        if (key.length !== 1 || (newRow === -1 && newCol === -1 && choice === -1)) return;
+        let rowKey = key;
+        let columnKey = key;
+        if (pinyin && /^[A-Za-zü]$/.test(key)) {
+            const selection = pinyin.push(key);
+            rowKey = selection.rowKey;
+            columnKey = selection.columnKey;
+        }
+        const newRow = rowKey == null ? -1 : machineLayout.rowKeys.indexOf(rowKey);
+        const newCol = columnKey == null ? -1 : machineLayout.columnKeys.indexOf(columnKey);
+        if (newRow === -1 && newCol === -1 && choice === -1) return;
         const row = state.targetVerticalPosition;
         const col = state.targetHorizontalPosition;
         if (newRow !== -1 && newRow !== row) {
@@ -81,7 +90,8 @@
             if (!event.repeat) carriageReturn();
             return;
         }
-        if (event.key.length !== 1 || !(machineLayout.rowKeys + machineLayout.columnKeys + '12345678 ').includes(event.key)) return;
+        const pinyinKey = pinyin && /^[A-Za-zü]$/.test(event.key);
+        if (!pinyinKey && (event.key.length !== 1 || !(machineLayout.rowKeys + machineLayout.columnKeys + '12345678 ').includes(event.key))) return;
         event.preventDefault();
         if (event.repeat) return;
         typeKey(event.key);
@@ -244,6 +254,7 @@
         typeKey,
         releaseStrike,
         get keyboardOpen() { return mobileKeyboardOpen; },
+        get pinyinBuffer() { return pinyin?.text || ''; },
         onKeyboardChange(listener) {
             keyboardListeners.add(listener);
             listener(mobileKeyboardOpen);

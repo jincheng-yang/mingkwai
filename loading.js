@@ -29,6 +29,13 @@
             description: '用98版五笔前两码选字，再按数字键印下汉字。',
             exampleRow: 'J', exampleColumn: 'e', initialRow: 'P', initialColumn: 'b'
         }),
+        pinyin: Object.freeze({
+            id: 'pinyin', name: '拼音',
+            candidatesUrl: 'dev/pinyin/pinyin.csv', candidatesBytes: 49304,
+            rollerTextUrl: 'dev/pinyin/pinyin.txt', rollerTextBytes: 24479,
+            description: '使用全拼输入。数字键印字，按字卡提示翻页。',
+            exampleRow: 'M', exampleColumn: ['i', 'n', 'g'], initialRow: 'Z', initialColumn: 'i'
+        }),
         'shuangpin-xiaohe': Object.freeze({
             id: 'shuangpin-xiaohe', name: '小鹤双拼',
             candidatesUrl: 'dev/shuangpin-xiaohe/shuangpin-xiaohe.csv', candidatesBytes: 49304,
@@ -53,12 +60,22 @@
         })
     });
     const requestedScheme = new URL(window.location.href).searchParams.get('scheme');
-    const scheme = Object.hasOwn(schemes, requestedScheme) ? schemes[requestedScheme] : schemes['wubi-06'];
+    const scheme = Object.hasOwn(schemes, requestedScheme) ? schemes[requestedScheme] : schemes.pinyin;
     schemeControl.value = scheme.id;
+    if (scheme.id === 'pinyin') {
+        document.getElementById('loading-key-instructions').textContent = '声母用大写、韵母用小写，例如转 ZHuan。';
+    }
     document.getElementById('loading-caption').textContent = `明快 · ${scheme.name}`;
     document.getElementById('loading-description').textContent = scheme.description;
     document.getElementById('loading-example-row').textContent = scheme.exampleRow;
-    document.getElementById('loading-example-column').textContent = scheme.exampleColumn;
+    const exampleColumn = document.getElementById('loading-example-column');
+    exampleColumn.replaceChildren();
+    for (const key of [scheme.exampleColumn].flat()) {
+        if (exampleColumn.childNodes.length) exampleColumn.append(' ');
+        const keycap = document.createElement('kbd');
+        keycap.textContent = key;
+        exampleColumn.append(keycap);
+    }
     document.title = `明快打字机模拟器 · ${scheme.name}`;
     schemeControl.addEventListener('change', () => {
         if (!Object.hasOwn(schemes, schemeControl.value) || schemeControl.value === scheme.id) return;
@@ -188,6 +205,7 @@
             await loadScript('card-raster.js');
             await loadScript('machine-state.js');
             await loadScript('paper.js');
+            if (scheme.id === 'pinyin') await loadScript('pinyin.js');
             await loadScript('keyboard.js');
             await loadScript('layout.js');
             await loadScript('magic_eye.js');
