@@ -664,3 +664,54 @@ em {
 .mobile-keyboard-open #reader-divider::after { width: 2px; height: 40px; left: 2px; top: calc(50% - 20px); }
 .resizing-panes, .resizing-panes * { user-select: none !important; cursor: inherit; }
 .resizing-panes #animation, .resizing-panes #magic_eye { transition: none; }
+
+@media print {
+    @page {
+        /* Match the background image at its native CSS pixel dimensions. */
+        size: 2000px 1333px;
+        margin: 0;
+    }
+
+    html, body {
+        height: auto;
+        overflow: visible;
+        background: white;
+        color: black;
+    }
+
+    body > :not(#typewriter),
+    #typewriter > :not(#paper-sheet),
+    #paper-sheet > :not(#text) {
+        display: none !important;
+    }
+
+    #typewriter, #paper-sheet {
+        position: static;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        transform: none;
+        background: none;
+        box-shadow: none;
+        transition: none;
+        will-change: auto;
+    }
+
+    #typewriter { container-type: inline-size; }
+    #paper-sheet { font-size: calc(100cqw / 26); }
+
+    .paper-page {
+        /* Keep the screen's 20 columns, nine rows and paper proportions. */
+        height: auto;
+        padding: 1.9145em 3em;
+        margin: 0;
+        border: 0;
+        box-shadow: none;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        break-inside: avoid;
+        break-before: page;
+    }
+
+    .paper-glyph { animation: none; opacity: 1; }
+}
